@@ -1,0 +1,20 @@
+{
+  "schema": "nyx.readiness/v1",
+  "weights": { "P0": 10, "P1": 4, "P2": 1 },
+  "thresholds": {
+    "disk_gib_warn": 20,
+    "disk_gib_hard": 8,
+    "feed_max_age_days": 7,
+    "clock_offset_s": 1
+  },
+  "on_p0_fail": "read_only",
+  "on_p1_fail": "degraded",
+  "trigger": ["session_start", "policy_edit", "tool_install", "egress_change"],
+  "adaptations": {
+    "RQ-02": "chattr/lsattr absent on overlayfs: policy immutability measured as mode 0444 + root ownership + HMAC seal verification (mission_gate integrity). control=sealed_digest",
+    "RQ-04": "off-host anchor requires NYX_ANCHOR_SINK (operator console path or https endpoint); unset => FAIL, anchor still written locally",
+    "RQ-07": "loopback scans cannot produce physical-interface traffic; test uses an external IP with a positive control to prove the sensor works",
+    "RQ-15": "no systemd/NTP in sandbox: offset measured against HTTP Date headers",
+    "RQ-19": "no AD host in lab: inventory recorded, arsenal_valued=false"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "nyx.egress/v1",
+  "paths": [
+    {
+      "id": "tor",
+      "type": "socks5",
+      "endpoint": "127.0.0.1:9050",
+      "tool": "proxychains4 / --socks5-hostname",
+      "isolation": "IsolateSOCKSAuth (distinct SOCKS auth per phase)",
+      "enabled": true,
+      "blocklist_risk": "high: exit IPs are public and frequently blocked"
+    },
+    {
+      "id": "vps-relay",
+      "type": "ssh-socks",
+      "endpoint": "operator-provided",
+      "tool": "ssh -D / chisel",
+      "isolation": "per-phase SSH connection",
+      "enabled": false,
+      "blocklist_risk": "low: dedicated IP",
+      "note": "not configured: no relay host supplied by the operator"
+    }
+  ],
+  "forbid_tor_when": ["engagement profile bans Tor", "target blocks Tor exits"],
+  "record_per_session": ["exit_ip", "country", "path_used"]
+}

@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Query the local CISA KEV catalog: kev [term] | kev --ransomware | kev --recent N"""
+import json, sys
+d = json.load(open("/opt/feeds/kev.json"))
+v = d["vulnerabilities"]
+a = sys.argv[1:]
+if not a:
+    rw = sum(1 for x in v if x["knownRansomwareCampaignUse"] == "Known")
+    print("KEV catalog %s: %s exploited CVEs (ransomware-linked: %d)" % (d["catalogVersion"], d["count"], rw))
+    print("usage: kev <term> | kev --ransomware | kev --recent N")
+    sys.exit(0)
+if a[0] == "--ransomware":
+    rows = [x for x in v if x["knownRansomwareCampaignUse"] == "Known"]
+elif a[0] == "--recent":
+    n = int(a[1]) if len(a) > 1 else 30
+    rows = sorted(v, key=lambda x: x["dateAdded"], reverse=True)[:n]
+else:
+    q = " ".join(a).lower()
+    rows = [x for x in v if q in json.dumps(x).lower()]
+print("%d match(es)" % len(rows))
+for x in rows:
+    print("%-16s %s  %s/%s  %s  ransom=%s" % (x["cveID"], x["dateAdded"], x["vendorProject"],
+          x["product"], x["vulnerabilityName"][:58], x["knownRansomwareCampaignUse"]))

@@ -1,0 +1,7 @@
+{
+  "svc_scan":       { "bin": "nmap",   "argv": ["-sV", "-Pn", "{target}"] },
+  "port_sweep":     { "bin": "nmap",   "argv": ["-p-", "--min-rate", "2000", "-Pn", "{target}"] },
+  "web_templates":  { "bin": "nuclei", "argv": ["-u", "{target}", "-severity", "critical,high"] },
+  "content_disc":   { "bin": "ffuf",   "argv": ["-u", "{target}/FUZZ", "-w", "/lab/share/wordlists/common.txt"] },
+  "inject_validate":{ "bin": "sqlmap", "argv": ["-u", "{target}", "--batch", "--level", "2"] }
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "nyx.tool-policy/v3",
+  "defaults": { "allow": false, "timeout_s": 900, "step_up": false, "pin": "warn" },
+  "tools": {
+    "nmap":        { "allow": true, "bin": "nmap",        "pin": "warn" },
+    "masscan":     { "allow": true, "bin": "masscan",     "pin": "warn" },
+    "nuclei":      { "allow": true, "bin": "nuclei",      "pin": "pin" },
+    "ffuf":        { "allow": true, "bin": "ffuf",        "pin": "warn" },
+    "amass":       { "allow": true, "bin": "amass",       "pin": "warn" },
+    "sqlmap":      { "allow": true, "bin": "sqlmap",      "pin": "warn" },
+    "msfconsole":  { "allow": true, "bin": "msfconsole",  "pin": "warn" },
+    "impacket":    { "allow": true, "bin": "impacket-secretsdump", "pin": "warn" },
+    "hashcat":     { "allow": true, "bin": "hashcat",     "pin": "warn" },
+    "john":        { "allow": true, "bin": "john",        "pin": "warn" },
+    "responder":   { "allow": true, "bin": "responder",   "pin": "warn" },
+    "curl":        { "allow": true, "bin": "curl",        "pin": "warn" },
+    "bash":        { "allow": true, "bin": "bash",        "pin": "warn" }
+  }
+}

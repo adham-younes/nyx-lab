@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: python syntax
+        run: |
+          python3 -m py_compile nyx/mission_gate.py router/nyx-router.py \
+            evals/refusal_probe.py evals/stub_llm.py
+
+      - name: bash syntax
+        run: |
+          for f in nyx/*.sh bootstrap/*.sh docker/*.sh docker/lab/*.sh; do
+            [ -f "$f" ] && bash -n "$f"
+          done
+
+      - name: json valid
+        run: |
+          for f in nyx/*.json evals/*.json; do
+            python3 -m json.tool "$f" >/dev/null
+          done
+
+      - name: manifest sealed
+        run: bash nyx/seal.sh --check
+
+      - name: no secrets
+        run: |
+          if grep -rInE "ohe_lic_|gh[psu]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|BEGIN (RSA|OPENSSH|EC) PRIVATE|session_api_key" \
+               --exclude-dir=.git . ; then
+            echo "secret-like material found"; exit 1
+          fi
+
+      - name: gate denial matrix (offline)
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys, tempfile, os
+          # The gate needs a key and root-owned policy; here we only assert the
+          # CLI contract that CI can check without privileges.
+          out = subprocess.run([sys.executable, "nyx/mission_gate.py", "--help"],
+                               capture_output=True, text=True)
+          assert out.returncode == 0, out.stderr
+          for cmd in ("init", "seal", "issue", "verify", "stepup", "ready", "integrity"):
+              assert cmd in out.stdout, f"missing subcommand {cmd}"
+          print("gate CLI contract ok")
+          PY

@@ -1,0 +1,157 @@
+{
+  "name": "NYX Operational System",
+  "version": "4.0",
+  "encoding": "utf-8",
+  "integration_mode": "full_replacement",
+  "authorization_model": "grant_token_signed_hmac_sha256",
+  "enforcement_point": "nyx-exec.sh -> mission_gate.py verify",
+  "routing_model": "model selects action id only; argv comes from actions.json; gate re-checks",
+  "required_llm_profile": "NYX-TLS13-PASS",
+  "required_mcp_servers": [
+    "hexstrike-ai"
+  ],
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "3cef3deab1428945800bcb697c3164f29eecd18b42c97d1e6f46953d4b9831a5"
+    },
+    {
+      "path": "nyx/NYX_SYSTEM_PROMPT_v3.0.md",
+      "sha256": "665f2d616cc845f0e4daee165ed59af0d2b03ae3c55f932efd00c6bc52d812c8"
+    },
+    {
+      "path": "nyx/NYX_PLAYBOOK.md",
+      "sha256": "4464bbfd520286b932e249893415ba3669de7c9e00048a6b9f30fca42402d007"
+    },
+    {
+      "path": "nyx/STRATEGIES.md",
+      "sha256": "069e78bf1a1f93a4411b44256c6cef0b46868f070f2db74e9d9d1459faa1390e"
+    },
+    {
+      "path": "nyx/behavior-tests.json",
+      "sha256": "78fee14b2154d84ed04361c383ca6d3304da7134171510906c1a9d069396fbf4"
+    },
+    {
+      "path": "nyx/mission_gate.py",
+      "sha256": "686f0ef1a9eccffa8d8c2d365b12f90fc7a3966e136c75a1a2f8d2912846bc87"
+    },
+    {
+      "path": "nyx/nyx-exec.sh",
+      "sha256": "b2c8b52bdd3cf5ccab313e989ec55c0942901dfbd5979222e31cc39f15b7fb56"
+    },
+    {
+      "path": "nyx/mission-policy.json",
+      "sha256": "c7b30eb7188541246ab1e6d95685aec02477e0609df7dfb27f9bb257bd3832e5"
+    },
+    {
+      "path": "nyx/tool-policy.json",
+      "sha256": "bc3e4346e6dbf7da335961fd19a11b8332eb916f9b5917fd02589fdc4820405d"
+    },
+    {
+      "path": "nyx/actions.json",
+      "sha256": "12adce265d1843b696ee438c9254ff2292500eb7b3038b05db247a4a9639f0ea"
+    },
+    {
+      "path": "nyx/envelope.md",
+      "sha256": "e90503cef2a77daf0d688e6ba80ece41be9150e435ba0ca361cccc25cc546bf5"
+    },
+    {
+      "path": "nyx/RUNBOOK.md",
+      "sha256": "baa0fa2d32aeaf2395cb70cb2fceffe0801811e7db12aad983a3aedfc85e113e"
+    },
+    {
+      "path": "nyx/migration-notes.md",
+      "sha256": "06b84a29d1ef7e955bdfb618a23c921d85c98e2784afda3ca2aca2e15d077c4d"
+    },
+    {
+      "path": "nyx/runtime-boot.sh",
+      "sha256": "315b0a2525493e27dea97cce4b9d8c98832bfcf2f013e9e97c60bdee6f9b276c"
+    },
+    {
+      "path": "nyx/seal.sh",
+      "sha256": "4d80814b6dd712bcac8608528dbc62651026cb956f9004d1f1f464d87dbb558a"
+    },
+    {
+      "path": "router/nyx-router.py",
+      "sha256": "35f3d240e061bd001debfd3d4ba327ddb47738c2327fd200980dce8522360721"
+    },
+    {
+      "path": "evals/refusal_probe.py",
+      "sha256": "134308f27cb558ed9f609d667c7fe54380f7a8460e5f7742d3b4461b85c39cf3"
+    },
+    {
+      "path": "evals/refusal_suite.json",
+      "sha256": "a4a1a57f0d346a27b7c00c625d42db07316c72944e3aae86801d9a0159cd2d25"
+    },
+    {
+      "path": "evals/stub_llm.py",
+      "sha256": "f0c123be336c9d1937db9441511a9c2eb459ca00299d36efb02873cbc838cb0e"
+    },
+    {
+      "path": "nyx/session-ready.sh",
+      "sha256": "df5b90f3ad795d7ad0cfa865a0bea58ec3daeeb8679cd12e5faaf6211f4aaa0f"
+    },
+    {
+      "path": "nyx/readiness-policy.json",
+      "sha256": "bcebd3dd0921a90757e91b5121439c2e13f961b882ac5848caa124e694321752"
+    },
+    {
+      "path": "nyx/egress.json",
+      "sha256": "f35699527322a565fe81c7e57e289c82e9c31ae8718daffb1d4a3d98652fc9ad"
+    },
+    {
+      "path": "nyx/root-exception.md",
+      "sha256": "f3722feae89b39e0b395aa1973ac88d8ba346ed486b5008df905e2a098ee36ea"
+    },
+    {
+      "path": "nyx/negctl-refresh.sh",
+      "sha256": "dd88c206f89a95c3dde4d0a7f3577c976b0c9deeaeb6c0b50dfc5c28c9e9aa15"
+    },
+    {
+      "path": "nyx/gate",
+      "sha256": "83234ae23dcfc636c5631b740be9a3525b5b4b04e4fc602f33ff9863e959720e"
+    },
+    {
+      "path": "bootstrap/install.sh",
+      "sha256": "60ed884e9cce788dec28e2633aeb0f1e9aab3cbc54724107423e871703578c36"
+    },
+    {
+      "path": "relay/og-relay.mjs",
+      "sha256": "b2eaf39f18fb2769069ef6603566a48943abf0726d7866a99e5935596d291c0d"
+    },
+    {
+      "path": "README.md",
+      "sha256": "d4ad7a8b7e61f5b0791883f83110d8fc178afe32b3089b93581fd38bc9e0e89e"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "c0f5f055ad2e0827817ac59e007c1e98773f13830ffea80e6f83844f3a1886b7"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "ffded0fd73e95c50f607a06f5a25906328bccca76c7e9a6aa8bb7f1eac22f7dc"
+    }
+  ],
+  "install": {
+    "policy": [
+      "/lab/etc/mission-policy.json",
+      "/lab/etc/tool-policy.json",
+      "/lab/etc/actions.json",
+      "/lab/etc/envelope.md",
+      "/lab/etc/refusal_suite.json"
+    ],
+    "bin": [
+      "/lab/bin/mission_gate.py",
+      "/lab/bin/nyx-exec.sh",
+      "/lab/bin/nyx-router.py",
+      "/lab/bin/refusal_probe.py",
+      "/lab/bin/runtime-boot.sh"
+    ],
+    "share": [
+      "/lab/share/wordlists/common.txt"
+    ],
+    "runtime_seal": "/lab/etc/policy.sha256"
+  },
+  "build": "bash nyx/seal.sh; verify with bash nyx/seal.sh --check",
+  "created_utc": "2026-11-22T00:00:00Z"
+}

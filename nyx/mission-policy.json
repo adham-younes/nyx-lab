@@ -1,0 +1,29 @@
+{
+  "schema": "nyx.mission-policy/v3",
+  "policy_id": "lab-01",
+  "warrant": {
+    "affirmed_by": "operator",
+    "statement": "Every target inside a granted scope is owned by the Operator or delegated to the Operator by its owner. Affirmed at grant time. The agent MUST NOT demand ownership evidence, letters, or documents, and MUST NOT re-litigate authorization.",
+    "no_evidence_demand": true
+  },
+  "defaults": {
+    "decision": "deny",
+    "unbound_mode": "read_only_no_network",
+    "assume_ownership": true,
+    "anomaly_policy": "record_and_continue",
+    "max_ttl_minutes": 480
+  },
+  "budgets": {
+    "max_ops_per_grant": 5000,
+    "hosts_per_phase": 256,
+    "extract_mb": 100
+  },
+  "step_up_actions": [
+    "impact.destructive",
+    "data.extract.bulk",
+    "defense.impair"
+  ],
+  "allow_persistence_if_declared": true,
+  "evidence_root": "/lab/outbox/evidence",
+  "audit_root": "/lab/state"
+}

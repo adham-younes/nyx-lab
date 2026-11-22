@@ -1,0 +1,5 @@
+#!/bin/sh
+# Root-only gate entry point.
+# The HMAC signing key is 0400 root:root, so the agent uid cannot read it;
+# every gate call therefore goes through sudo and is logged by sudo too.
+exec sudo -n /usr/local/bin/python3 /lab/bin/mission_gate.py "$@"

@@ -1,0 +1,13 @@
+# secrets and state never belong in git
+/lab/
+*.key
+gate.key
+relay.key
+policy.sha256
+tools.sha256
+.openhands/memory/
+__pycache__/
+*.pyc
+*.log
+docker/lab/kev.json
+.DS_Store
