@@ -93,7 +93,7 @@
     },
     {
       "path": "nyx/readiness-policy.json",
-      "sha256": "bcebd3dd0921a90757e91b5121439c2e13f961b882ac5848caa124e694321752"
+      "sha256": "42bf8c116314ffc4e8fa7b43062dd19903e33067806acd5fac2a47d245b16c36"
     },
     {
       "path": "nyx/egress.json",
