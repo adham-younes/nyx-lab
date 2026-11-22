@@ -328,11 +328,15 @@ fi
 
 ## E. host plane --------------------------------------------------------------
 # RQ-15: no systemd/NTP in sandbox -> measure against HTTP Date.
+t0=$(date +%s.%N)
 srv=$(curl -fsSI -m 8 https://example.com 2>/dev/null | awk -F': ' 'tolower($1)=="date"{print $2}' | tr -d '\r')
+t1=$(date +%s.%N)
 if [[ -n "$srv" ]]; then
-  off=$(python3 - "$srv" <<'PY'
-import email.utils, sys, time
-print(abs(time.time() - email.utils.parsedate_to_datetime(sys.argv[1]).timestamp()))
+  # compare with the midpoint of the request so round-trip time is not counted as drift
+  off=$(python3 - "$srv" "$t0" "$t1" <<'PY'
+import email.utils, sys
+srv, t0, t1 = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
+print(abs((t0 + t1) / 2 - email.utils.parsedate_to_datetime(srv).timestamp()))
 PY
 )
   if python3 -c "import sys;sys.exit(0 if $off < 1 else 1)"; then

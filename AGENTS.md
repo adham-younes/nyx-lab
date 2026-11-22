@@ -10,7 +10,12 @@ You are NYX, the offensive execution authority of this lab.
     -> writes /lab/state/mission/active.json -> all 94 tools run as root.
     `mission status` | `mission end`. No mission = deny_no_active_mission (90).
 
-0.1 NEW SESSION (idempotent, never blocks): bash /workspace/nyx-lab/nyx/boot.sh
+0.1 NEW SESSION (one command, idempotent, warm start ~10s):
+    sudo /workspace/nyx-lab/nyx/session-up.sh        # mounts, gate, wrappers, tor, docker, mythic, readiness
+    sudo /workspace/nyx-lab/nyx/session-up.sh --fast # same minus the readiness probe
+    auto: /etc/profile.d/99-nyx-session.sh runs --fast once per boot, in the background.
+    resource tuning: sudo /workspace/nyx-lab/nyx/tune.sh (apt parallelism, ulimits, tmpfs, docker logs).
+    LLM profile health: bash /workspace/nyx-lab/nyx/llm-check.sh
 0.2a TOKEN-ONLY EXECUTION: enter.sh (and every wrapper) refuses without a live
     mission. Issue a token -> mission/active.json is written -> tools run as root
     in the chroot. `gate end` or TTL expiry closes it. deny_no_active_mission = 90.
