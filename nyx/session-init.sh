@@ -45,6 +45,10 @@ fi
 docker ps --format '{{.Names}}' 2>/dev/null | grep -q mythic_nginx; row mythic $? "teamserver :7443"
 
 # 5. relay (optional)
+if ! ss -ltn 2>/dev/null | grep -q ':9050' && [[ -x "$KALI/enter.sh" ]]; then
+  (nohup "$KALI/enter.sh" tor >/var/log/tor-nyx.log 2>&1 &)
+  for _ in $(seq 1 15); do ss -ltn 2>/dev/null | grep -q ':9050' && break; sleep 1; done
+fi
 if ss -ltn 2>/dev/null | grep -q ':9050'; then row relay 0 "socks 9050 up"; else row relay 1 "socks 9050 down (optional)"; fi
 
 # 6. memory reflects measurement
