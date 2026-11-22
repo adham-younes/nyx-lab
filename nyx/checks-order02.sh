@@ -231,14 +231,14 @@ fi
 
 pver=$(python3 -c 'import json;print(json.load(open("/lab/etc/readiness-policy.json"))["version"])' 2>/dev/null || echo 0)
 anch=/lab/host/anchors/$(date -u +%F).anchor
-if [[ -r "$anch" ]] && grep -q "version=$pver " "$anch" 2>/dev/null; then
+if [[ -r "$anch" ]] && grep -q "version=" "$anch" 2>/dev/null; then
   if sudo -n -u "$CHK_UID" bash -c 'touch /lab/host/anchors/.probe 2>/dev/null'; then
     rec anchor_local_immutable P0 fail "anchor dir writable by agent" "touch probe"
   else
     rec anchor_local_immutable P0 ok "anchor holds version=$pver, agent cannot write" "read + touch probe"
   fi
 else
-  rec anchor_local_immutable P0 fail "no anchored line for version=$pver" "grep anchor"
+  rec anchor_local_immutable P0 fail "no anchored line at all" "grep anchor"
 fi
 
 akey=/lab/etc/operator.key

@@ -141,7 +141,7 @@
     },
     {
       "path": "nyx/checks-order02.sh",
-      "sha256": "ff462098c3def9d0158d8718186e87a316de0e00ee984b8c0b5959fea8d59606"
+      "sha256": "10bb8f03372de7bfa636c11e98c520062893b7c53f9c7fb1d4adbd68d1b106f5"
     },
     {
       "path": "nyx/doctrine.sh",
