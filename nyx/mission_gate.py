@@ -217,9 +217,12 @@ def _operator_code(a, pol, scope):
     codes = set(oc.get("codes") or [])
     if not codes:
         out("deny_operator_code_unconfigured", False)
-    if not getattr(a, "operator_code", None):
+    code = getattr(a, "operator_code", None)
+    if not code and getattr(a, "operator_code_stdin", False):
+        code = sys.stdin.readline().strip()
+    if not code:
         out("deny_operator_code_required", False)
-    h = hashlib.sha256(a.operator_code.strip().encode()).hexdigest()
+    h = hashlib.sha256(code.strip().encode()).hexdigest()
     # fixture code: loopback/TEST scope only, multi-use, never a real target
     fsha = Path("/lab/etc/fixture.sha256")
     if h not in codes and fsha.exists() and h == fsha.read_text().strip():
@@ -372,8 +375,10 @@ def main():
     s.set_defaults(fn=cmd_seal)
 
     s = sub.add_parser("issue")
-    s.add_argument("--operator-code", required=True,
-                   help="operator authorization code (single use)")
+    g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--operator-code", help="operator code (visible in argv)")
+    g.add_argument("--operator-code-stdin", action="store_true",
+                   help="read the operator code from stdin (no argv, no history)")
     s.add_argument("--objective", required=True)
     s.add_argument("--include", nargs="+", required=True)
     s.add_argument("--exclude", nargs="*")
