@@ -85,6 +85,13 @@ chmod 0444 /lab/etc/tools.sha256
 log "repo manifest"
 bash "$REPO/nyx/seal.sh" >/dev/null
 
+if [[ ! -s /lab/etc/fixture.code ]]; then
+  head -c 5 /dev/urandom | od -An -tx1 | tr -d ' \n' > /lab/etc/fixture.code
+  chown root:root /lab/etc/fixture.code; chmod 0600 /lab/etc/fixture.code
+  sha256sum /lab/etc/fixture.code | cut -d' ' -f1 | tr -d '\n' > /lab/etc/fixture.sha256
+  chown root:root /lab/etc/fixture.sha256; chmod 0444 /lab/etc/fixture.sha256
+fi
+
 log "doctrine tree"
 install -d -m 0755 /lab/doctrine
 cp -a "$REPO/doctrine/." /lab/doctrine/

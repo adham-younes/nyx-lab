@@ -140,8 +140,41 @@ def cmd_seal(a):
     out("sealed", True, sha256=digests)
 
 
+def _loopback_only(scope):
+    inc = scope or []
+    return bool(inc) and all(x.startswith("127.") or x.startswith("TEST-") for x in inc)
+
+
+def _operator_code(a, pol, scope):
+    oc = pol.get("operator_codes") or {}
+    codes = set(oc.get("codes") or [])
+    if not codes:
+        out("deny_operator_code_unconfigured", False)
+    if not getattr(a, "operator_code", None):
+        out("deny_operator_code_required", False)
+    h = hashlib.sha256(a.operator_code.strip().encode()).hexdigest()
+    # fixture code: loopback/TEST scope only, multi-use, never a real target
+    fsha = Path("/lab/etc/fixture.sha256")
+    if h not in codes and fsha.exists() and h == fsha.read_text().strip():
+        if not _loopback_only(scope):
+            out("deny_fixture_code_scope", False, scope=scope)
+        return h
+    if h not in codes:
+        out("deny_operator_code", False, code_sha256=h[:12])
+    led = Path(oc.get("ledger") or (STATE / "operator-codes.json"))
+    used = json.loads(led.read_text()) if led.exists() else {}
+    if h in used:
+        out("deny_operator_code_replayed", False, code_sha256=h[:12], first_used=used[h])
+    used[h] = utc()
+    led.parent.mkdir(parents=True, exist_ok=True)
+    led.write_text(json.dumps(used, indent=2, sort_keys=True))
+    os.chmod(led, 0o600)
+    return h
+
+
 def cmd_issue(a):
     pol = jload(POLICY_F)
+    code_sha = _operator_code(a, pol, a.include)
     k = key()
     ttl = min(a.ttl, pol["defaults"]["max_ttl_minutes"])
     grant = {
@@ -164,6 +197,7 @@ def cmd_issue(a):
     p.write_text(json.dumps(rec, indent=2), encoding="utf-8")
     os.chmod(p, 0o600)
     audit({"event": "grant_issue", "grant_id": grant["grant_id"],
+           "operator_code_sha256": code_sha[:12],
            "scope": grant["scope"], "exp": grant["exp"], "sha256": sha_file(p)})
     out("grant_issued", True, grant_path=str(p), grant_id=grant["grant_id"],
         exp=grant["exp"], scope_sha256=rec["scope_sha256"])
@@ -271,6 +305,8 @@ def main():
     s.set_defaults(fn=cmd_seal)
 
     s = sub.add_parser("issue")
+    s.add_argument("--operator-code", required=True,
+                   help="operator authorization code (single use)")
     s.add_argument("--objective", required=True)
     s.add_argument("--include", nargs="+", required=True)
     s.add_argument("--exclude", nargs="*")

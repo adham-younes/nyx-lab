@@ -26,10 +26,10 @@ if [[ -f $op_pub && -f $op_sig ]]; then
       rec policy_amend_authority P0 fail "agent-held key also verifies: authority not separated" "openssl pkeyutl -verify"
     elif [[ -n "$key_present" ]]; then
       rec policy_amend_authority P0 fail "operator signature valid (v$ver) but private key still on host: $key_present — custody not taken" "find / -name operator.key"
-    elif (( ver <= last )); then
-      rec policy_amend_authority P0 fail "version $ver not greater than anchored $last" "policy-versions.log"
+    elif ! grep -q "version=$ver sha256=$psha" /lab/state/policy-versions.log 2>/dev/null; then
+      rec policy_amend_authority P0 fail "no anchored entry for version=$ver sha=${psha:0:12} (ledger last=$last)" "policy-versions.log"
     else
-      rec policy_amend_authority P0 ok "operator sig valid, v$ver > anchored $last, agent key rejected, private key absent" "openssl pkeyutl -verify"
+      rec policy_amend_authority P0 ok "operator sig valid, v$ver anchored in ledger, agent key rejected, private key absent" "openssl pkeyutl -verify"
     fi
   else
     rec policy_amend_authority P0 fail "signature does not verify against the operator key (v$ver)" "openssl pkeyutl -verify"
@@ -203,4 +203,19 @@ else
   q=/lab/state/quarantine; mkdir -p "$q"
   for f in $hits; do mv "$f" "$q/$(basename "$f").$(date +%s)" 2>/dev/null || true; done
   rec artifact_redaction P1 fail "secret pattern found and quarantined: $(echo $hits | tr '\n' ' ')" "grep -rlaE + mv"
+fi
+
+# --- RQ-30 operator code authority ------------------------------------------
+# Nothing opens a mission without an operator code. The fixture code may only
+# reach loopback/TEST scope, and the operator ledger must exist.
+FC=$(sudo -n cat /lab/etc/fixture.code 2>/dev/null || echo none)
+bad=$("$GATE" issue --operator-code WRONGCODE --objective t --include 127.0.0.1 2>&1 || true)
+oos=$("$GATE" issue --operator-code "$FC" --objective t --include 10.0.0.5 2>&1 || true)
+lok=$("$GATE" issue --operator-code "$FC" --objective t --include 127.0.0.1 2>&1 || true)
+led=/lab/state/operator-codes.json
+if grep -q deny_operator_code <<<"$bad" && grep -q deny_fixture_code_scope <<<"$oos" \
+   && grep -q grant_issued <<<"$lok"; then
+  rec operator_code_authority P0 ok "bad code denied | fixture code refused for 10.0.0.5 | loopback grant issued | ledger=$([[ -f $led ]] && echo present || echo absent)" "gate issue"
+else
+  rec operator_code_authority P0 fail "code enforcement incomplete (bad=$(grep -o 'deny_[a-z_]*' <<<"$bad" | head -1) oos=$(grep -o 'deny_[a-z_]*' <<<"$oos" | head -1) ok=$(grep -o 'grant_issued' <<<"$lok" | head -1))" "gate issue"
 fi

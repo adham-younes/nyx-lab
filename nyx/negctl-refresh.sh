@@ -8,7 +8,8 @@ mkdir -p "$T"
 
 exp=$(python3 -c 'import json;print(json.load(open("/lab/state/test/valid.json"))["grant"]["exp"])' 2>/dev/null || echo 0)
 if (( exp - $(date +%s) <= 600 )); then
-  out=$("$GATE" issue --objective "readiness negative controls (TEST)" \
+  FC=$(cat /lab/etc/fixture.code 2>/dev/null || echo none)
+out=$("$GATE" issue --operator-code "$FC" --objective "readiness negative controls (TEST)" \
         --include 127.0.0.1 --tools nmap --ttl 480)
   p=$(python3 -c 'import json,sys;print(json.load(sys.stdin)["grant_path"])' <<<"$out")
   install -m 644 "$p" "$T/valid.json"
@@ -24,7 +25,7 @@ else
 fi
 
 if [[ ! -f "$T/expired.json" ]]; then
-  out=$("$GATE" issue --objective "expired fixture (TEST)" \
+  out=$("$GATE" issue --operator-code "$FC" --objective "expired fixture (TEST)" \
         --include 127.0.0.1 --tools nmap --ttl 1)
   p=$(python3 -c 'import json,sys;print(json.load(sys.stdin)["grant_path"])' <<<"$out")
   install -m 644 "$p" "$T/expired.json"

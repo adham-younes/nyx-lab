@@ -39,5 +39,23 @@
    "evidence_required": true,
    "purpose": "readiness self-test: c2_callback, cleanup_roundtrip, egress_deny_test"
   }
+ },
+ "operator_codes": {
+  "algo": "sha256",
+  "single_use": true,
+  "ledger": "/lab/state/operator-codes.json",
+  "note": "Only these codes may open a mission. Stored hashed; consumed once. The agent holds no copy.",
+  "codes": [
+   "6449eb7ee22d2eadca5d6b6bea221f2ba905074a0f508287320fc930037e6a4f",
+   "70568ec3b08de410c0a0ab655200e11589a6c6db67dbb93f5908a7c89cd87285",
+   "214bbe3d959773aeaa2c62e9f6c1faefbea71f471de2405239636d51a9fb3b56",
+   "d7728da7cf65ab344988f76e927f242a05566898c5617ccdca51d3f471ab9718",
+   "95eb16f2d8b684cca5fde3773163a0fe04a53b363fbabfdcb4f9a224679ed98a",
+   "e12b4054ab280022ab4a2279fc5379741f3b698846caf40e8bca4c03298375b4",
+   "5d384da39b35ef8c0c9416e05433369c6f06591328f892dc902691a6d0c21d99",
+   "a55a0b42c48267fc2173fa5b5c210bc4e7e77513dc16d33c80c9b0f6e8a5d38e",
+   "f1b8fe18b217c970d0d4c91ccbcc0b5485fd8dd499a16f88a4f338897b712468",
+   "2e3d78d0ce637299f8429a06d950d027c102cddffcceb526217b105ae5f4e049"
+  ]
  }
 }
