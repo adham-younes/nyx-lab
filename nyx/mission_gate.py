@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 STATE = Path(os.environ.get("NYX_STATE", "/lab/state"))
+READINESS_F = Path("/lab/etc/readiness-policy.json")
 POLICY_F = Path(os.environ.get("NYX_POLICY", "/lab/etc/mission-policy.json"))
 TOOLS_F = Path(os.environ.get("NYX_TOOL_POLICY", "/lab/etc/tool-policy.json"))
 KEY_F = Path(os.environ.get("NYX_KEY_FILE", "/lab/etc/gate.key"))
@@ -120,6 +121,72 @@ def load_grant(path, k):
         out("deny_grant_signature", False, grant=str(path))
     return g["grant"]
 
+
+
+def _last_anchored():
+    led = STATE / "policy-versions.log"
+    last = 0
+    if led.exists():
+        for line in led.read_text().splitlines():
+            for tok in line.split():
+                if tok.startswith("version="):
+                    try: last = max(last, int(tok.split("=", 1)[1]))
+                    except ValueError: pass
+    return last
+
+
+def _operator_sig_ok(pol_path):
+    pub = Path("/lab/etc/readiness-policy.pub")
+    sig = Path("/lab/etc/readiness-policy.sig")
+    if not (pub.exists() and sig.exists()):
+        return False
+    import subprocess, tempfile
+    d = json.loads(Path(pol_path).read_text())
+    msg = tempfile.NamedTemporaryFile(delete=False)
+    msg.write(f"version={d.get('version')} sha256={sha_file(pol_path)}\n".encode())
+    msg.close()
+    rc = subprocess.run(["openssl", "pkeyutl", "-verify", "-pubin", "-inkey", str(pub),
+                         "-rawin", "-in", msg.name, "-sigfile", str(sig)],
+                        capture_output=True).returncode
+    os.unlink(msg.name)
+    return rc == 0
+
+
+def cmd_amend(a):
+    src = Path(a.policy)
+    if not src.exists():
+        out("deny_amend_missing", False, path=str(src))
+    d = json.loads(src.read_text())
+    if int(d.get("version", 0)) != int(a.version):
+        out("deny_amend_version_mismatch", False, declared=d.get("version"), given=a.version)
+    last = _last_anchored()
+    if int(a.version) <= last:
+        out("deny_amend_version_not_increasing", False, last_anchored=last, given=a.version)
+    old = jload(READINESS_F)
+    for k, v in (old.get("thresholds") or {}).items():
+        nv = (d.get("thresholds") or {}).get(k)
+        if nv is not None and float(nv) < float(v):
+            out("deny_amend_loosening", False, threshold=k, old=v, new=nv)
+    if not (d.get("classes") or {}):
+        out("deny_amend_no_classes", False)
+    READINESS_F.write_text(json.dumps(d, indent=1) + "\n", encoding="utf-8")
+    os.chmod(READINESS_F, 0o444)
+    signed = _operator_sig_ok(READINESS_F)
+    sha = sha_file(READINESS_F)
+    led = STATE / "policy-versions.log"
+    led.parent.mkdir(parents=True, exist_ok=True)
+    line = f"{utc()} version={d['version']} sha256={sha} sig={'ok' if signed else 'absent'} authority={a.authority}"
+    with led.open("a") as f:
+        f.write(line + "\n")
+    anchors = Path("/srv/nyx-anchors")
+    anchors.mkdir(parents=True, exist_ok=True)
+    ap = anchors / (time.strftime("%Y-%m-%d") + ".anchor")
+    with ap.open("a") as f:
+        f.write(f"AMEND {line}\n")
+    audit({"event": "policy_amend", "version": d["version"], "sha256": sha,
+           "operator_signed": signed, "authority": a.authority, "anchor": str(ap)})
+    out("amended", True, version=d["version"], sha256=sha,
+        operator_signed=signed, anchor=str(ap), anchored_prev=last)
 
 def cmd_init(a):
     KEY_F.parent.mkdir(parents=True, exist_ok=True)
@@ -326,6 +393,12 @@ def main():
     s.add_argument("--action", required=True)
     s.add_argument("--nonce", required=True)
     s.set_defaults(fn=cmd_stepup)
+
+    s = sub.add_parser("amend")
+    s.add_argument("--policy", required=True)
+    s.add_argument("--version", type=int, required=True)
+    s.add_argument("--authority", default="operator")
+    s.set_defaults(fn=cmd_amend)
 
     s = sub.add_parser("ready")
     s.set_defaults(fn=cmd_ready)

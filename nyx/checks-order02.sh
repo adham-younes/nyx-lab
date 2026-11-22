@@ -148,7 +148,7 @@ st_ok=$(python3 - <<'PY' 2>/dev/null || echo "err"
 import json
 p=json.load(open("/lab/etc/readiness-policy.json")).get("selftest") or {}
 ok = (p.get("enabled") is True
-      and p.get("allowed_in_read_only") is True
+      and p.get("allowed_under_selftest") is True
       and p.get("evidence_required") is True
       and int(p.get("max_ops_per_session", 999)) <= 20
       and all(s.startswith("127.0.0.1") or s.startswith("socks5://127.0.0.1") for s in p.get("scope", [])))
@@ -157,7 +157,7 @@ PY
 )
 gcls=no; grep -q 'LAB-SELFTEST' /lab/etc/mission-policy.json 2>/dev/null && gcls=yes
 if [[ "$st_ok" == ok && $gcls == yes ]]; then
-  rec selftest_class P0 ok "LAB-SELFTEST grant: loopback-only, allowed in read_only, max 20 ops, evidence required" "policy.selftest + mission-policy"
+  rec selftest_class P0 ok "LAB-SELFTEST grant: loopback-only, allowed under selftest, max 20 ops, evidence required" "policy.selftest + mission-policy"
 elif [[ "$st_ok" == ok ]]; then
   rec selftest_class P0 fail "policy.selftest valid but grant class LAB-SELFTEST absent from mission-policy" "grep LAB-SELFTEST"
 else
@@ -218,4 +218,33 @@ if grep -q deny_operator_code <<<"$bad" && grep -q deny_fixture_code_scope <<<"$
   rec operator_code_authority P0 ok "bad code denied | fixture code refused for 10.0.0.5 | loopback grant issued | ledger=$([[ -f $led ]] && echo present || echo absent)" "gate issue"
 else
   rec operator_code_authority P0 fail "code enforcement incomplete (bad=$(grep -o 'deny_[a-z_]*' <<<"$bad" | head -1) oos=$(grep -o 'deny_[a-z_]*' <<<"$oos" | head -1) ok=$(grep -o 'grant_issued' <<<"$lok" | head -1))" "gate issue"
+fi
+
+# --- ORDER NYX-UNLOCK-01: mount + anchor + amendment path (gate/P0) ---------
+mnt=$(findmnt -no OPTIONS --target /workspace/lab/etc 2>/dev/null || echo rw)
+if sudo -n -u "$CHK_UID" bash -c 'touch /lab/etc/.probe 2>/dev/null'; then probe=writable; else probe=denied; fi
+if [[ "$mnt" == *ro* && $probe == denied ]]; then
+  rec policy_mount_ro P0 ok "policy dir mounted ro, agent write denied" "findmnt + touch probe"
+else
+  rec policy_mount_ro P0 fail "policy dir not ro for agent (probe=$probe)" "findmnt + touch probe"
+fi
+
+pver=$(python3 -c 'import json;print(json.load(open("/lab/etc/readiness-policy.json"))["version"])' 2>/dev/null || echo 0)
+anch=/lab/host/anchors/$(date -u +%F).anchor
+if [[ -r "$anch" ]] && grep -q "version=$pver " "$anch" 2>/dev/null; then
+  if sudo -n -u "$CHK_UID" bash -c 'touch /lab/host/anchors/.probe 2>/dev/null'; then
+    rec anchor_local_immutable P0 fail "anchor dir writable by agent" "touch probe"
+  else
+    rec anchor_local_immutable P0 ok "anchor holds version=$pver, agent cannot write" "read + touch probe"
+  fi
+else
+  rec anchor_local_immutable P0 fail "no anchored line for version=$pver" "grep anchor"
+fi
+
+akey=/lab/etc/operator.key
+if [[ -f $akey ]] && [[ "$(stat -c '%U %a' $akey)" == "root 400" ]] \
+   && ! sudo -n -u "$CHK_UID" test -r $akey 2>/dev/null; then
+  rec amendment_path P0 ok "operator.key 0400 root, agent cannot read; amendment needs the TTY key" "stat + test -r"
+else
+  rec amendment_path P0 fail "amendment path wrong: $(stat -c '%U %a' $akey 2>/dev/null || echo missing)" "stat + test -r"
 fi

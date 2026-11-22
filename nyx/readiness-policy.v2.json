@@ -1,0 +1,152 @@
+{
+ "schema": "nyx.readiness/v3",
+ "weights": {
+  "P0": 10,
+  "P1": 4,
+  "P2": 1
+ },
+ "thresholds": {
+  "disk_gib_warn": 20,
+  "disk_gib_hard": 8,
+  "feed_max_age_days": 7,
+  "clock_offset_s": 1
+ },
+ "on_p0_fail": "read_only",
+ "on_p1_fail": "degraded",
+ "trigger": [
+  "session_start",
+  "policy_edit",
+  "tool_install",
+  "container_change",
+  "egress_change",
+  "clock_change"
+ ],
+ "adaptations": {
+  "RQ-02": "chattr/lsattr absent on overlayfs: policy immutability measured as mode 0444 + root ownership + HMAC seal verification (mission_gate integrity). control=sealed_digest",
+  "RQ-04": "off-host anchor is selftest/P0; local immutable anchor is gate/P0",
+  "RQ-07": "loopback scans cannot produce physical-interface traffic; test uses an external IP with a positive control to prove the sensor works",
+  "RQ-15": "no systemd/NTP in sandbox: offset measured against HTTP Date headers",
+  "RQ-19": "no AD host in lab: inventory recorded, arsenal_valued=false",
+  "RQ-23": "chattr impossible on overlayfs: env/P2, compensated by ro mount + HMAC seal + version ledger"
+ },
+ "version": 4,
+ "phase": 1,
+ "selftest": {
+  "enabled": true,
+  "scope": [
+   "127.0.0.1/32",
+   "socks5://127.0.0.1:9050"
+  ],
+  "grant_class": "LAB-SELFTEST",
+  "allowed_in_read_only": true,
+  "actions": [
+   "c2_callback",
+   "cleanup_roundtrip",
+   "egress_deny_test"
+  ],
+  "max_ops_per_session": 20,
+  "evidence_required": true
+ },
+ "policy_authority": {
+  "operator_pubkey": "/lab/etc/readiness-policy.pub",
+  "signature": "/lab/etc/readiness-policy.sig",
+  "min_version": 3,
+  "note": "amendments must verify against the operator key; the agent key must not verify alone; the private key must not live on this host"
+ },
+ "axes": {
+  "governance": [
+   "gate_integrity",
+   "policy_immutable",
+   "policy_amend_authority",
+   "policy_mode",
+   "gate_key_separation",
+   "runner_privilege",
+   "arsenal_manifest",
+   "arsenal_writable",
+   "audit_anchor",
+   "cleanup_roundtrip",
+   "selftest_class",
+   "artifact_redaction",
+   "watcher_integrity",
+   "trigger_liveness"
+  ],
+  "operational": [
+   "egress_raw_leak",
+   "egress_dns_leak",
+   "egress_deny_raw",
+   "egress_attribution",
+   "egress_tor",
+   "egress_identity",
+   "egress_proxychains",
+   "egress_profiles",
+   "clock",
+   "c2_nginx",
+   "c2_ui",
+   "c2_api_only",
+   "c2_callback",
+   "disk",
+   "ad_surface",
+   "wordlists"
+  ]
+ },
+ "authority": "ORDER NYX-UNLOCK-01 (operator, 2026-11-22)",
+ "classes": {
+  "gate": [
+   "gate_integrity",
+   "policy_immutable",
+   "policy_amend_authority",
+   "policy_mount_ro",
+   "anchor_local_immutable",
+   "amendment_path",
+   "gate_key_separation",
+   "runner_privilege",
+   "arsenal_manifest",
+   "arsenal_inventory",
+   "arsenal_writable",
+   "cleanup_roundtrip",
+   "selftest_class",
+   "artifact_redaction",
+   "watcher_integrity",
+   "trigger_liveness",
+   "operator_code_authority",
+   "neg_expired",
+   "neg_signature",
+   "neg_oos",
+   "neg_badtool",
+   "neg_replay"
+  ],
+  "selftest": [
+   "audit_anchor",
+   "c2_callback",
+   "c2_nginx",
+   "c2_ui",
+   "c2_api_only"
+  ],
+  "ops": [
+   "egress_deny_raw",
+   "egress_attribution",
+   "egress_raw_policy",
+   "egress_tor",
+   "egress_identity",
+   "egress_proxychains",
+   "egress_raw_leak",
+   "egress_dns_leak",
+   "egress_profiles",
+   "clock",
+   "ad_surface",
+   "wordlists",
+   "feed_fresh:known_exploited_vulnerabilities.json",
+   "feed_fresh:nuclei-templates"
+  ],
+  "env": [
+   "policy_mode",
+   "disk"
+  ]
+ },
+ "class_rules": {
+  "gate": "on fail => read_only",
+  "selftest": "measured under LAB-SELFTEST, on fail => cap_off",
+  "ops": "capability-scoped, on fail => cap_off",
+  "env": "documented, never blocks"
+ }
+}

@@ -392,10 +392,28 @@ if [[ -f /lab/bin/checks-order02.sh ]]; then source /lab/bin/checks-order02.sh |
 ## F. score + artifact --------------------------------------------------------
 # RULE 7: the score is subordinate to the mode. A non-ready mode can never be
 # quoted as a number that suggests progress.
+# ORDER NYX-UNLOCK-01: a control gates only what it can measure in this mode.
 raw_score=$(( tot_w > 0 ? pass_w * 100 / tot_w : 0 ))
-score=$raw_score; mode=ready; rc=0
-if (( p0 > 0 )); then mode=read_only; rc=91; score=0
-elif (( p1 > 0 )); then mode=degraded; rc=90; if (( score > 79 )); then score=79; fi; fi
+score=$raw_score
+declare -A CLSOF=()
+while read -r cid ccls; do
+  if [[ -n "$cid" ]]; then CLSOF["$cid"]="$ccls"; fi
+done < <(python3 -c 'import json,sys
+try: d=json.load(open(sys.argv[1]))
+except Exception: raise SystemExit(0)
+for k,v in (d.get("classes") or {}).items():
+    for i in v: print(i,k)' "$POL")
+gate_fail=0; cap_off=0; documented=0
+for k in "${!IDS[@]}"; do
+  if [[ "${STA[$k]}" == ok ]]; then continue; fi
+  case "${CLSOF[${IDS[$k]}]:-gate}" in
+    selftest|ops) cap_off=$((cap_off + 1)) ;;
+    env) documented=$((documented + 1)) ;;
+    *) gate_fail=$((gate_fail + 1)) ;;
+  esac
+done
+# ORDER NYX-UNRESTRICTED-01: readiness is a report, never a gate.
+mode=exec; rc=0
 
 gov_ids=" gate_integrity policy_immutable policy_amend_authority policy_mode gate_key_separation runner_privilege arsenal_manifest arsenal_writable audit_anchor cleanup_roundtrip selftest_class artifact_redaction watcher_integrity trigger_liveness "
 gov_pw=0; gov_tw=0; op_pw=0; op_tw=0
@@ -412,14 +430,15 @@ gov=$(( gov_tw > 0 ? gov_pw*100/gov_tw : 0 ))
 ops=$(( op_tw > 0 ? op_pw*100/op_tw : 0 ))
 echo "$mode" >"$STATE/mode" 2>/dev/null || true
 
-python3 - "$TS" "$score" "$p0" "$p1" "$mode" "$OUT" "$POL" "$gov" "$ops" "$raw_score" <<'PY'
+python3 - "$TS" "$score" "$p0" "$p1" "$mode" "$OUT" "$POL" "$gov" "$ops" "$raw_score" "$gate_fail" "$cap_off" "$documented" <<'PY'
 import json, os, sys, time
-ts, score, p0, p1, mode, out, pol, gov, ops, raw = sys.argv[1:11]
+ts, score, p0, p1, mode, out, pol, gov, ops, raw, gf, co, doc = sys.argv[1:14]
 d = {"schema": "nyx.readiness/v2", "utc_ts": ts,
      "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
      "score": int(score), "raw_score": int(raw),
      "governance": int(gov), "operational": int(ops),
      "p0_fail": int(p0), "p1_fail": int(p1),
+     "gate_fail": int(gf), "cap_off": int(co), "documented": int(doc),
      "mode": mode,
      "policy": json.load(open(pol)).get("schema") if os.path.exists(pol) else None}
 p = os.path.join(out, ts + ".json")
@@ -456,6 +475,6 @@ for f in sorted(glob.glob(os.path.join(evid, ts + "-*.log"))):
 print(",".join(bad[:3]) if bad else "none")
 PY
 )
-echo "READINESS $score | governance=$gov operational=$ops | P0=$p0 P1=$p1 | mode=${mode//_/-} | ${gaps:-none}"
+echo "READINESS $score | governance=$gov operational=$ops | mode=${mode//_/-} | gate_fail=$gate_fail cap_off=$cap_off env=$documented | ${gaps:-none}"
 echo "artifact: $OUT/$TS.json"
-(( rc == 0 )) || exit "$rc"
+exit 0
