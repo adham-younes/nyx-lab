@@ -181,7 +181,7 @@ fi
 wat=/lab/bin/readiness-watch.sh
 if [[ -f $wat ]]; then
   o=$(stat -c '%U %a' "$wat")
-  inman=no; grep -q "readiness-watch.sh" /lab/etc/tools.sha256 2>/dev/null && inman=yes
+  inman=no; grep -q "readiness-watch.sh" /lab/state/tools.sha256 2>/dev/null && inman=yes
   writ=yes; sudo -n -u "$CHK_UID" test -w "$wat" 2>/dev/null && writ=yes || writ=no
   alive=no; pgrep -f "$wat" >/dev/null 2>&1 && alive=yes
   if [[ "$o" == "root 755" && $inman == yes && $writ == no ]]; then

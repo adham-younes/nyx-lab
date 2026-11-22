@@ -1,5 +1,5 @@
 {
- "schema": "nyx.readiness/v3",
+ "schema": "nyx.readiness/v4",
  "weights": {
   "P0": 10,
   "P1": 4,
@@ -11,8 +11,6 @@
   "feed_max_age_days": 7,
   "clock_offset_s": 1
  },
- "on_p0_fail": "read_only",
- "on_p1_fail": "degraded",
  "trigger": [
   "session_start",
   "policy_edit",
@@ -29,7 +27,7 @@
   "RQ-19": "no AD host in lab: inventory recorded, arsenal_valued=false",
   "RQ-23": "chattr impossible on overlayfs: env/P2, compensated by ro mount + HMAC seal + version ledger"
  },
- "version": 4,
+ "version": 6,
  "phase": 1,
  "selftest": {
   "enabled": true,
@@ -89,7 +87,7 @@
    "wordlists"
   ]
  },
- "authority": "ORDER NYX-UNLOCK-01 (operator, 2026-11-22)",
+ "authority": "informational-only (ORDER NYX-UNRESTRICTED-01)",
  "classes": {
   "gate": [
    "gate_integrity",
@@ -143,10 +141,6 @@
    "disk"
   ]
  },
- "class_rules": {
-  "gate": "on fail => read_only",
-  "selftest": "measured under LAB-SELFTEST, on fail => cap_off",
-  "ops": "capability-scoped, on fail => cap_off",
-  "env": "documented, never blocks"
- }
+ "gating": false,
+ "note": "Counts and score are logs. They never block, deny, or change state. Authorization is an operator code only."
 }

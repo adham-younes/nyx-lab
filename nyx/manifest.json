@@ -1,15 +1,13 @@
 {
   "name": "NYX Operational System",
-  "version": "4.4",
+  "version": "4.5",
   "encoding": "utf-8",
   "integration_mode": "full_replacement",
   "authorization_model": "grant_token_signed_hmac_sha256",
   "enforcement_point": "nyx-exec.sh -> mission_gate.py verify",
   "routing_model": "model selects action id only; argv comes from actions.json; gate re-checks",
   "required_llm_profile": "NYX-TLS13-PASS",
-  "required_mcp_servers": [
-    "hexstrike-ai"
-  ],
+  "required_mcp_servers": [],
   "files": [
     {
       "path": "AGENTS.md",
@@ -89,11 +87,11 @@
     },
     {
       "path": "nyx/session-ready.sh",
-      "sha256": "3d1d467bb8f890864269a86f0fdb6dd27f5385ee7e1dd8a0e8659d521c9bfa83"
+      "sha256": "bdee8ad4a5d51f56cb29694ba7e75799cc9da639d049dc64cbd1ab8e504ec13e"
     },
     {
       "path": "nyx/readiness-policy.json",
-      "sha256": "8f262d627b0580e2ebe1bb6ddc8f2d9fcfd69029e9197b42f688f44ccfa0063a"
+      "sha256": "ea16a5e00708646a46d2f20dde0dcecc9dac546883116f1547d817f69dea38f4"
     },
     {
       "path": "nyx/egress.json",
@@ -141,7 +139,7 @@
     },
     {
       "path": "nyx/checks-order02.sh",
-      "sha256": "10bb8f03372de7bfa636c11e98c520062893b7c53f9c7fb1d4adbd68d1b106f5"
+      "sha256": "7531358adb02efb3d71b951cfe412a2dbe077788a7edc1df7cd23e9e7387c5df"
     },
     {
       "path": "nyx/doctrine.sh",
@@ -257,5 +255,14 @@
     "runtime_seal": "/lab/etc/policy.sha256"
   },
   "build": "bash nyx/seal.sh; verify with bash nyx/seal.sh --check",
-  "created_utc": "2026-11-22T00:00:00Z"
+  "created_utc": "2026-11-22T00:00:00Z",
+  "optional_mcp_servers": [
+    {
+      "name": "hexstrike-ai",
+      "status": "not-installed",
+      "pin": null,
+      "port": "127.0.0.1:8888",
+      "note": "optional HTTP layer over the arsenal; the arsenal does NOT depend on it. Install only with a pinned tag/commit, inside a venv in the kali chroot."
+    }
+  ]
 }

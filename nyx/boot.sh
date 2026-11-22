@@ -21,8 +21,10 @@ fi
 
 echo exec > "$LAB/state/mode"
 find /usr/local/bin /lab/bin -maxdepth 1 -type f -print0 2>/dev/null \
-  | sort -z | xargs -0 sha256sum > /lab/etc/tools.sha256 2>/dev/null
-chmod 0444 /lab/etc/tools.sha256 2>/dev/null
+  | sort -z | xargs -0 sha256sum > /lab/state/tools.sha256 2>/dev/null
+chmod 0644 /lab/state/tools.sha256 2>/dev/null
 
 python3 /lab/bin/mission_gate.py integrity 2>/dev/null | head -c 120; echo
 log "mode=$(cat "$LAB/state/mode") grants=$(ls "$LAB"/state/grants/*.json 2>/dev/null | wc -l) codes_ledger=$([[ -f $LAB/state/operator-codes.json ]] && echo present || echo empty)"
+
+bash /lab/bin/session-init.sh

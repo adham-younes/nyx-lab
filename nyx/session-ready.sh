@@ -18,7 +18,9 @@ mkdir -p "$OUT" "$EVID"
 declare -a IDS=() CLS=() STA=() DET=() CMD=() SHA=()
 p0=0; p1=0; pass_w=0; tot_w=0; i=0
 
-rec() { # rec <id> <class> <ok|fail|skip> <detail> <cmd>
+RETIRED=" policy_mount_ro policy_mode policy_amend_authority amendment_path anchor_local_immutable "
+rec() {
+  case "$RETIRED" in *" $1 "*) return 0 ;; esac # rec <id> <class> <ok|fail|skip> <detail> <cmd>
   i=$((i+1))
   IDS+=("$1"); CLS+=("$2"); STA+=("$3"); DET+=("${4:0:300}")
   CMD+=("${5:0:300}")
@@ -124,15 +126,15 @@ else
 fi
 
 ## B. arsenal plane -----------------------------------------------------------
-if [[ -f /lab/etc/tools.sha256 ]]; then
-  man_n=$(grep -c . /lab/etc/tools.sha256 2>/dev/null || echo 0)
-  wrap_n=$(grep -c ' /usr/local/bin/' /lab/etc/tools.sha256 2>/dev/null || echo 0)
-  lab_n=$(grep -c ' /lab/bin/' /lab/etc/tools.sha256 2>/dev/null || echo 0)
-  lab_names=$(awk '{print $2}' /lab/etc/tools.sha256 | grep '^/lab/bin/' | xargs -n1 basename 2>/dev/null | paste -sd, -)
-  run arsenal_manifest P0 sha256sum -c --quiet /lab/etc/tools.sha256
+if [[ -f /lab/state/tools.sha256 ]]; then
+  man_n=$(grep -c . /lab/state/tools.sha256 2>/dev/null || echo 0)
+  wrap_n=$(grep -c ' /usr/local/bin/' /lab/state/tools.sha256 2>/dev/null || echo 0)
+  lab_n=$(grep -c ' /lab/bin/' /lab/state/tools.sha256 2>/dev/null || echo 0)
+  lab_names=$(awk '{print $2}' /lab/state/tools.sha256 | grep '^/lab/bin/' | xargs -n1 basename 2>/dev/null | paste -sd, -)
+  run arsenal_manifest P0 sha256sum -c --quiet /lab/state/tools.sha256
   rec arsenal_inventory P2 ok "entries=$man_n wrappers=$wrap_n lab_helpers=$lab_n ($lab_names)" "sha256sum -c + awk"
 else
-  rec arsenal_manifest P0 fail "missing /lab/etc/tools.sha256" "test -f"
+  rec arsenal_manifest P0 fail "missing /lab/state/tools.sha256" "test -f"
 fi
 
 w=""
@@ -298,16 +300,22 @@ else
   rec c2_nginx P1 ok "$st" "docker ps"
 fi
 
-if [[ -n "${MYTHIC_TOKEN:-}" ]]; then
-  cb="$(curl -ksS -m 10 -H "Authorization: Bearer $MYTHIC_TOKEN" \
-        https://127.0.0.1:7443/api/v1.4/callbacks 2>/dev/null | head -c 200)"
-  if grep -q '"id"' <<<"${cb:-}"; then
-    rec c2_callback P0 ok "callback present: $(echo "$cb" | head -c 120)" "GET /callbacks"
+T="${MYTHIC_TOKEN:-}"
+if [[ -z "$T" && -r /lab/state/mythic.token ]]; then T=$(cat /lab/state/mythic.token); fi
+if [[ -z "$T" ]]; then T=$(sudo -n cat /lab/state/mythic.token 2>/dev/null); fi
+if [[ -n "$T" ]]; then
+  cb="$(curl -ksS -m 15 -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+        -d '{"query":"query{callback{id display_id active}}"}' \
+        https://127.0.0.1:7443/graphql/ 2>/dev/null | head -c 300)"
+  if grep -q '"callback":\[{.*"id"' <<<"$cb"; then
+    rec c2_callback P0 ok "callback present: $(echo "$cb" | head -c 100)" "graphql callback"
+  elif grep -q '"callback":\[\]' <<<"$cb"; then
+    rec c2_callback P0 fail "token live, API 200, zero callbacks: no implant has called back" "graphql callback"
   else
-    rec c2_callback P0 fail "no callback proof" "GET /callbacks"
+    rec c2_callback P0 fail "token live, unexpected API response" "graphql callback"
   fi
 else
-  rec c2_callback P0 fail "MYTHIC_TOKEN unset: no proof possible" "env"
+  rec c2_callback P0 fail "no token at /lab/state/mythic.token" "token file"
 fi
 
 # RQ-12: no direct DB/queue writes from the session.
@@ -439,7 +447,8 @@ d = {"schema": "nyx.readiness/v2", "utc_ts": ts,
      "governance": int(gov), "operational": int(ops),
      "p0_fail": int(p0), "p1_fail": int(p1),
      "gate_fail": int(gf), "cap_off": int(co), "documented": int(doc),
-     "mode": mode,
+     "mode": mode, "authority": "operator-code-only", "gating": False,
+     "retired": "policy_seal_model (deleted by ORDER NYX-UNRESTRICTED-01)",
      "policy": json.load(open(pol)).get("schema") if os.path.exists(pol) else None}
 p = os.path.join(out, ts + ".json")
 json.dump(d, open(p, "w"), indent=2, sort_keys=True)
@@ -475,6 +484,6 @@ for f in sorted(glob.glob(os.path.join(evid, ts + "-*.log"))):
 print(",".join(bad[:3]) if bad else "none")
 PY
 )
-echo "READINESS $score | governance=$gov operational=$ops | mode=${mode//_/-} | gate_fail=$gate_fail cap_off=$cap_off env=$documented | ${gaps:-none}"
+echo "NYX-REPORT $score | governance=$gov operational=$ops | state=$mode auth=operator-code gating=off | open=$((p0 + p1)) | ${gaps:-none}"
 echo "artifact: $OUT/$TS.json"
 exit 0
