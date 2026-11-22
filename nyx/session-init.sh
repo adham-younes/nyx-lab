@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Cold-start of the whole lab for a new session. Idempotent, never blocks, exit 0.
 set -uo pipefail
+export NYX_SYSTEM=1
 LAB=/lab; KALI=/workspace/kali; REPO=/workspace/nyx-lab; MYTHIC=/workspace/mythic
 ok=0; bad=0
 row() { if [[ $2 -eq 0 ]]; then ok=$((ok+1)); printf 'ok   %-10s %s\n' "$1" "$3"; else bad=$((bad+1)); printf 'FAIL %-10s %s\n' "$1" "$3"; fi; }

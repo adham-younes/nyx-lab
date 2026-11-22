@@ -266,6 +266,15 @@ def cmd_issue(a):
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(rec, indent=2), encoding="utf-8")
     os.chmod(p, 0o600)
+    mdir = STATE / "mission"
+    mdir.mkdir(parents=True, exist_ok=True)
+    act = mdir / "active.json"
+    act.write_text(json.dumps({"grant_id": grant["grant_id"], "scope": grant["scope"],
+                               "exp": grant["exp"], "objective": a.objective,
+                               "code_sha256": code_sha[:12]}, indent=1))
+    os.chmod(act, 0o600)
+    audit({"event": "mission_activate", "grant_id": grant["grant_id"],
+           "scope": grant["scope"], "exp": grant["exp"]})
     audit({"event": "grant_issue", "grant_id": grant["grant_id"],
            "operator_code_sha256": code_sha[:12],
            "scope": grant["scope"], "exp": grant["exp"], "sha256": sha_file(p)})
@@ -287,6 +296,14 @@ def _stepup_check(a, k):
     used_set.add(mac)
     used.write_text(json.dumps(sorted(used_set)))
     os.chmod(used, 0o600)
+
+
+def cmd_end(a):
+    act = STATE / "mission" / "active.json"
+    if act.exists():
+        act.unlink()
+    audit({"event": "mission_end"})
+    out("mission_ended", True)
 
 
 def cmd_verify(a):
@@ -386,6 +403,9 @@ def main():
     s.add_argument("--ttl", type=int, default=120)
     s.add_argument("--persistence", action="store_true")
     s.set_defaults(fn=cmd_issue)
+
+    s = sub.add_parser("end")
+    s.set_defaults(fn=cmd_end)
 
     s = sub.add_parser("verify")
     s.add_argument("--grant", required=True)
