@@ -409,7 +409,10 @@ for f in sorted(glob.glob(os.path.join(evid, ts + "-*.log"))):
     rows.append({"file": os.path.basename(f), "head": head})
 d = json.load(open(art))
 d["checks"] = rows
+d["artifact"] = os.path.basename(art)
 json.dump(d, open(art, "w"), indent=2, sort_keys=True)
+json.dump(d, open(os.path.join(os.path.dirname(art), "latest.json"), "w"),
+          indent=2, sort_keys=True)
 PY
 
 gaps=$(python3 - "$EVID" "$TS" <<'PY'

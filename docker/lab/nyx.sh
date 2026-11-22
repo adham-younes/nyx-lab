@@ -53,3 +53,4 @@ disk
 
 /lab/bin/negctl-refresh.sh >/dev/null 2>&1 || true
 sudo -n -u openhands /lab/bin/session-ready.sh || true
+pgrep -f /lab/bin/readiness-watch.sh >/dev/null 2>&1 || setsid /lab/bin/readiness-watch.sh >/dev/null 2>&1 &

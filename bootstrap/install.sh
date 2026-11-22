@@ -30,6 +30,7 @@ install -m 0755 -o root -g root \
   "$REPO/nyx/nyx-exec.sh" \
   "$REPO/nyx/session-ready.sh" \
   "$REPO/nyx/negctl-refresh.sh" \
+  "$REPO/nyx/readiness-watch.sh" \
   "$REPO/nyx/runtime-boot.sh" \
   "$REPO/nyx/gate" \
   "$REPO/router/nyx-router.py" \
@@ -85,3 +86,7 @@ bash "$REPO/nyx/seal.sh" >/dev/null
 log "readiness (as $AGENT_USER)"
 sudo -n -u "$AGENT_USER" env NYX_TEST_GRANT=/lab/state/test/valid.json \
   /lab/bin/session-ready.sh || true
+
+log "readiness watcher"
+pgrep -f /lab/bin/readiness-watch.sh >/dev/null 2>&1 \
+  || setsid /lab/bin/readiness-watch.sh >/dev/null 2>&1 &
