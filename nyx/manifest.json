@@ -1,6 +1,6 @@
 {
   "name": "NYX Operational System",
-  "version": "4.1",
+  "version": "4.3",
   "encoding": "utf-8",
   "integration_mode": "full_replacement",
   "authorization_model": "grant_token_signed_hmac_sha256",
@@ -13,7 +13,7 @@
   "files": [
     {
       "path": "AGENTS.md",
-      "sha256": "df3c04e7c5ea1d90a5eb2e3860e706b6c5f7c0b7e42fed5a040a64777f61db41"
+      "sha256": "ae0b9b8c576edc585fda2eedfa5f6a209032e10a3190c8fb8af72a48c873c10f"
     },
     {
       "path": "nyx/NYX_SYSTEM_PROMPT_v3.0.md",
@@ -37,11 +37,11 @@
     },
     {
       "path": "nyx/nyx-exec.sh",
-      "sha256": "b2c8b52bdd3cf5ccab313e989ec55c0942901dfbd5979222e31cc39f15b7fb56"
+      "sha256": "69d987e032a39df32ba2662fb7eebd0966f81b6de4c3b1852df5f1f93b41a633"
     },
     {
       "path": "nyx/mission-policy.json",
-      "sha256": "c7b30eb7188541246ab1e6d95685aec02477e0609df7dfb27f9bb257bd3832e5"
+      "sha256": "987d873059268f7cecb6acababeef154c204cb6830e68cd0f7bcf751e95cf79d"
     },
     {
       "path": "nyx/tool-policy.json",
@@ -89,11 +89,11 @@
     },
     {
       "path": "nyx/session-ready.sh",
-      "sha256": "23dd31efaa339423b4f8439e2bc85c72160a2e1809146cb4cceb9b29a26314e1"
+      "sha256": "ed25eb64d3c13d4dea823bd7ad0deba3ed53212ab18938270dd1638345e15ab7"
     },
     {
       "path": "nyx/readiness-policy.json",
-      "sha256": "42bf8c116314ffc4e8fa7b43062dd19903e33067806acd5fac2a47d245b16c36"
+      "sha256": "674e26fc3f5df5d6f0339f0da94faa979f97ad6c624505fa1784a1a2fc21f4d6"
     },
     {
       "path": "nyx/egress.json",
@@ -113,7 +113,7 @@
     },
     {
       "path": "bootstrap/install.sh",
-      "sha256": "2114cab6515ca6e6ddbc79c1f2eea5df2647620539639eceaa2ce88c5f261555"
+      "sha256": "91ec3da3689c5da3133a04472d429506cd45d3a8016b5e97faefc43c4db68edf"
     },
     {
       "path": "relay/og-relay.mjs",
@@ -137,7 +137,99 @@
     },
     {
       "path": "nyx/readiness-watch.sh",
-      "sha256": "ae6edfbe0492b7f1c6ca64225f9fa7c022f274ee0ba9572b7eb84953d2d294a2"
+      "sha256": "2b932f8fa41f87cc2dc69a23a261c93d51c8371969acb6fde1d9aa5f0c2de218"
+    },
+    {
+      "path": "nyx/checks-order02.sh",
+      "sha256": "490211899ce721bb66c06a742a286182a4a3e0459f456069eb115d2be11457e6"
+    },
+    {
+      "path": "nyx/doctrine.sh",
+      "sha256": "ea92b5d2dadf3f8e5d0d6920c0f5ff1624e6ac8d554b4c1f4e89f6a9791d70be"
+    },
+    {
+      "path": "nyx/doctrine-policy.json",
+      "sha256": "994e34813005806f12e49e3ebde3bf77cf12b2855e25520e4670f77772d5ab67"
+    },
+    {
+      "path": "doctrine/DOCTRINE.md",
+      "sha256": "824b202c8460cc253dde2a5c241ab98fc44b96580cc7c050a8339e30a8d43c1b"
+    },
+    {
+      "path": "doctrine/index.json",
+      "sha256": "ce9c0a5aa4e06394ca0c938c3c1ffaef2e0dfdc5f997c3ca292c601758ef11bd"
+    },
+    {
+      "path": "doctrine/cards/RECON-ID-01.md",
+      "sha256": "799276657d2772c37c4025db96d187c53960b263fe53217ff61246d03a16ae47"
+    },
+    {
+      "path": "doctrine/cards/WEB-AUTH-01.md",
+      "sha256": "2de30936d8d1ccb517312659db020e29d2564bd27555ef115a79d5bb584541c2"
+    },
+    {
+      "path": "doctrine/cards/WEB-INJ-01.md",
+      "sha256": "a6be2e8f774e7fe94ee16e1bd8234b924e17ef173f1cba00e324dbacdda5163f"
+    },
+    {
+      "path": "doctrine/cards/CRED-01.md",
+      "sha256": "0c2b4be839bbeb4c9da65dc37ffbc2078c00ee6fe39d7265f1ebae4061c6712b"
+    },
+    {
+      "path": "doctrine/cards/AD-DOM-01.md",
+      "sha256": "8b65c4c123e38511132f4518265442b8b665ea19bdba16633d473855932c4596"
+    },
+    {
+      "path": "doctrine/cards/PRIVESC-LIN-01.md",
+      "sha256": "1ac6dd1818df6ad0000104d19c39d679bb35b2865cf695473207b0a1f558538c"
+    },
+    {
+      "path": "doctrine/cards/PRIVESC-WIN-01.md",
+      "sha256": "4f764285837fa4bafd031b4aad005bd966038c5c886b25c87097782c457e40ad"
+    },
+    {
+      "path": "doctrine/cards/LATERAL-01.md",
+      "sha256": "cd2603df098f4c51e29546529355282519e8f8b6a915a91d68eb6aeda6bff06d"
+    },
+    {
+      "path": "doctrine/cards/OPSEC-C2-01.md",
+      "sha256": "3e49e2a0e307b6143ff2ea9a61ab988bf3032c79810c85af9e8291be15b3b328"
+    },
+    {
+      "path": "doctrine/triage/economics.md",
+      "sha256": "17a714e1af0d86b61cd46e5895f711bf76c6f78071af053fb2c5bdc34000f6c4"
+    },
+    {
+      "path": "doctrine/triage/assumptions.md",
+      "sha256": "f0ea5bd46d1f1dc044f05ed5fc8408e2b7e03dd9fb82c8c5d2bcce8f4efad873"
+    },
+    {
+      "path": "doctrine/failures/index.md",
+      "sha256": "79ea4101330fbfd315c64008afa599417ecc797199318d289a2a11a6ba123af5"
+    },
+    {
+      "path": "doctrine/failures/2026-11-22-egress-unattributed.md",
+      "sha256": "d912dfefeb1a325c008c5dc949e3edd17715a2653ff4b9cf97829ffe9caf9bf3"
+    },
+    {
+      "path": "doctrine/metrics/output.md",
+      "sha256": "f3eceb2c6c905837d24158832b4c240f899734ad8da72bffc4c55818ab93be7e"
+    },
+    {
+      "path": "doctrine/drills/D-01-false-positive.md",
+      "sha256": "48c3a5026da346ec9f1efa885e8fa6eb93b8b3d3ae307e080407947da9ba8d33"
+    },
+    {
+      "path": "doctrine/drills/D-02-timebox.md",
+      "sha256": "f958435af83ef90a90ad9e8857f2caafc4ba34708d19d191a801fef80f059edc"
+    },
+    {
+      "path": "doctrine/drills/D-03-doctrine-miss.md",
+      "sha256": "0bc71e28ec4b9d0605dd7fcca9b4ee1f1dc086bed1354051ca0a3d2a7f9491fa"
+    },
+    {
+      "path": "doctrine/cases/README.md",
+      "sha256": "767528a4f4f305dc84ef635cbf3413a77bf32b1fc75ab56628f772d632dc9e6f"
     }
   ],
   "install": {

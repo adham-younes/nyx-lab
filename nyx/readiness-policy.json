@@ -1,5 +1,5 @@
 {
- "schema": "nyx.readiness/v1",
+ "schema": "nyx.readiness/v2",
  "weights": {
   "P0": 10,
   "P1": 4,
@@ -27,5 +27,64 @@
   "RQ-07": "loopback scans cannot produce physical-interface traffic; test uses an external IP with a positive control to prove the sensor works",
   "RQ-15": "no systemd/NTP in sandbox: offset measured against HTTP Date headers",
   "RQ-19": "no AD host in lab: inventory recorded, arsenal_valued=false"
+ },
+ "version": 2,
+ "phase": 1,
+ "selftest": {
+  "enabled": true,
+  "scope": [
+   "127.0.0.1/32",
+   "socks5://127.0.0.1:9050"
+  ],
+  "grant_class": "LAB-SELFTEST",
+  "allowed_in_read_only": true,
+  "actions": [
+   "c2_callback",
+   "cleanup_roundtrip",
+   "egress_deny_test"
+  ],
+  "max_ops_per_session": 20,
+  "evidence_required": true
+ },
+ "policy_authority": {
+  "operator_pubkey": "/lab/etc/operator.pub",
+  "signature": "/lab/etc/readiness-policy.sig",
+  "note": "policy amendments must verify against the operator key; the agent key must not verify alone"
+ },
+ "axes": {
+  "governance": [
+   "gate_integrity",
+   "policy_immutable",
+   "policy_amend_authority",
+   "policy_mode",
+   "gate_key_separation",
+   "runner_privilege",
+   "arsenal_manifest",
+   "arsenal_writable",
+   "audit_anchor",
+   "cleanup_roundtrip",
+   "selftest_class",
+   "artifact_redaction",
+   "watcher_integrity",
+   "trigger_liveness"
+  ],
+  "operational": [
+   "egress_raw_leak",
+   "egress_dns_leak",
+   "egress_deny_raw",
+   "egress_attribution",
+   "egress_tor",
+   "egress_identity",
+   "egress_proxychains",
+   "egress_profiles",
+   "clock",
+   "c2_nginx",
+   "c2_ui",
+   "c2_api_only",
+   "c2_callback",
+   "disk",
+   "ad_surface",
+   "wordlists"
+  ]
  }
 }

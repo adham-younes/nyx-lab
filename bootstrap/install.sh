@@ -33,6 +33,7 @@ install -m 0755 -o root -g root \
   "$REPO/nyx/readiness-watch.sh" \
   "$REPO/nyx/runtime-boot.sh" \
   "$REPO/nyx/gate" \
+  "$REPO/nyx/doctrine.sh" \
   "$REPO/router/nyx-router.py" \
   "$REPO/evals/refusal_probe.py" /lab/bin/
 ln -sfn /lab/bin/runtime-boot.sh /workspace/runtime-boot.sh
@@ -49,7 +50,8 @@ install -m 0444 -o root -g root \
   "$REPO/nyx/refusal_suite.json" \
   "$REPO/nyx/readiness-policy.json" \
   "$REPO/nyx/egress.json" \
-  "$REPO/nyx/root-exception.md" /lab/etc/
+  "$REPO/nyx/root-exception.md" \
+  "$REPO/nyx/doctrine-policy.json" /lab/etc/
 
 log "signing key"
 if [[ ! -s /lab/etc/gate.key ]]; then
@@ -82,6 +84,15 @@ chmod 0444 /lab/etc/tools.sha256
 
 log "repo manifest"
 bash "$REPO/nyx/seal.sh" >/dev/null
+
+log "doctrine tree"
+install -d -m 0755 /lab/doctrine
+cp -a "$REPO/doctrine/." /lab/doctrine/
+chown -R root:root /lab/doctrine
+chmod -R a+rX /lab/doctrine
+# the agent journals failures and cases; doctrine itself stays operator-owned
+install -d -m 0775 -o "$AGENT_USER" -g "$AGENT_USER" /lab/doctrine/failures /lab/doctrine/cases
+install -d -m 0775 -o "$AGENT_USER" -g "$AGENT_USER" /lab/state/doctrine
 
 log "readiness (as $AGENT_USER)"
 sudo -n -u "$AGENT_USER" env NYX_TEST_GRANT=/lab/state/test/valid.json \

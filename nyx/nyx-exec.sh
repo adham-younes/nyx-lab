@@ -18,6 +18,22 @@ if ! grep -q '"ok": true' <<<"$DEC"; then
   exit 90
 fi
 
+# RULE 9 (ORDER NYX-READINESS-02): raw sockets cannot traverse SOCKS, so they
+# are not run from this host. Relay-side execution only (NYX_RAW_ON_RELAY=1).
+if [[ "${NYX_RAW_ON_RELAY:-0}" != "1" ]]; then
+  raw=""
+  case "$TOOL" in
+    masscan) raw="masscan" ;;
+    nmap) for a in "$@"; do
+            case "$a" in -sS|-sU|-sA|-sW|-sN|-sF|-sX|-sY|-sZ|-O) raw="$a" ;; esac
+          done ;;
+  esac
+  if [[ -n "$raw" ]]; then
+    echo "NYX_DENIED code=deny_raw_socket_local detail=$raw is relay-side only" >&2
+    exit 91
+  fi
+fi
+
 GID="$(grep -o '"grant_id": "[^"]*"' <<<"$DEC" | cut -d'"' -f4)"
 EV="${NYX_EVIDENCE_ROOT:-/lab/outbox/evidence}/$(date -u +%F)/${GID}/$(date -u +%Y%m%dT%H%M%SZ)-${TOOL}"
 mkdir -p "$EV"

@@ -1,0 +1,13 @@
+{
+  "schema": "nyx.doctrine-policy/v1",
+  "mandatory_triggers": ["before_phase", "exploit_failed_twice"],
+  "max_lines": 120,
+  "usage_log": "/lab/state/doctrine/usage.jsonl",
+  "enforce": {
+    "before_each_phase": true,
+    "on_second_failure_of_a_technique": true,
+    "no_card_requires_failure_entry": true
+  },
+  "timeboxes_source": "cards",
+  "note": "A miss is not a dead end; it is an unrecorded gap. Journal it, then act."
+}

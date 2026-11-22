@@ -40,11 +40,13 @@ run() {
 }
 
 P=$(fp_policy); T=$(fp_tools); C=$(fp_container); E=$(fp_egress)
+date -u +%s > "$STATE/heartbeat"
 printf '%s watch=start policy=%s tools=%s containers=%s egress=%s\n' \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$P" "$T" "$C" "$E" >> "$LOG"
 
 n=0
 while sleep "$INTERVAL"; do
+  date -u +%s > "$STATE/heartbeat"
   p=$(fp_policy); t=$(fp_tools); c=$(fp_container); e=$(fp_egress)
   reason=""
   [[ "$p" != "$P" ]] && reason+="policy "

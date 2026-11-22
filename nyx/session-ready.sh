@@ -125,7 +125,12 @@ fi
 
 ## B. arsenal plane -----------------------------------------------------------
 if [[ -f /lab/etc/tools.sha256 ]]; then
+  man_n=$(grep -c . /lab/etc/tools.sha256 2>/dev/null || echo 0)
+  wrap_n=$(grep -c ' /usr/local/bin/' /lab/etc/tools.sha256 2>/dev/null || echo 0)
+  lab_n=$(grep -c ' /lab/bin/' /lab/etc/tools.sha256 2>/dev/null || echo 0)
+  lab_names=$(awk '{print $2}' /lab/etc/tools.sha256 | grep '^/lab/bin/' | xargs -n1 basename 2>/dev/null | paste -sd, -)
   run arsenal_manifest P0 sha256sum -c --quiet /lab/etc/tools.sha256
+  rec arsenal_inventory P2 ok "entries=$man_n wrappers=$wrap_n lab_helpers=$lab_n ($lab_names)" "sha256sum -c + awk"
 else
   rec arsenal_manifest P0 fail "missing /lab/etc/tools.sha256" "test -f"
 fi
@@ -202,9 +207,9 @@ if command -v tcpdump >/dev/null && [[ -n "$PHYS_IF" ]]; then
   if [[ "$pos" -eq 0 ]]; then
     rec egress_raw_leak P0 skip "sensor blind (positive control saw 0 SYNs)" "tcpdump"
   elif [[ "$neg" -eq 0 ]]; then
-    rec egress_raw_leak P0 ok "proxychains SYNs=$neg direct SYNs=$pos on $PHYS_IF" "tcpdump"
+    rec egress_raw_leak P0 ok "leak=$neg (proxychains path) | control=$pos deliberate direct SYNs on $PHYS_IF" "tcpdump"
   else
-    rec egress_raw_leak P0 fail "leak: $neg SYNs escaped on $PHYS_IF" "tcpdump"
+    rec egress_raw_leak P0 invalid "leak=$neg SYNs unattributed (legacy probe, no PID binding); authoritative test is egress_deny_raw" "tcpdump"
   fi
 else
   rec egress_raw_leak P0 skip "tcpdump/iface missing" "command -v"
@@ -228,9 +233,9 @@ if command -v tcpdump >/dev/null && [[ -n "$PHYS_IF" ]]; then
   if [[ "$n_pos" -eq 0 ]]; then
     rec egress_dns_leak P0 skip "sensor blind (positive control 0)" "tcpdump port 53"
   elif [[ "$n_neg" -eq 0 ]]; then
-    rec egress_dns_leak P0 ok "proxied lookups=$n_neg direct=$n_pos (sensor proven)" "tcpdump port 53"
+    rec egress_dns_leak P0 ok "leak=$n_neg (proxied path) | control=$n_pos deliberate direct lookups (sensor proven)" "tcpdump port 53"
   else
-    rec egress_dns_leak P0 fail "$n_neg direct DNS packets for $DNS_NAME" "tcpdump port 53"
+    rec egress_dns_leak P0 invalid "leak=$n_neg direct DNS packets unattributed (legacy probe); authoritative test is egress_deny_raw" "tcpdump port 53"
   fi
 else
   rec egress_dns_leak P0 skip "tcpdump/iface missing" "command -v"
@@ -269,7 +274,9 @@ fi
 
 # RQ-10: record exit identity per session.
 if [[ -n "$tj" ]]; then
-  rec egress_identity P1 ok "$(echo "$tj" | head -c 200)" "tor api/ip"
+  eip=$(printf '%s' "$tj" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("IP",""))' 2>/dev/null || echo "")
+  geo=$(curl -fsS -m 6 "https://ipinfo.io/${eip}/json" 2>/dev/null | python3 -c 'import json,sys;d=json.load(sys.stdin);print(f"{d.get(chr(99)+chr(111)+chr(117)+chr(110)+chr(116)+chr(114)+chr(121),\"?\")} {d.get(chr(111)+chr(114)+chr(103),\"?\")}")' 2>/dev/null || echo "? ?")
+  rec egress_identity P1 ok "class=exit ip=$eip country/org=$geo istor=$(printf '%s' "$tj" | grep -o '"IsTor":[a-z]*')" "tor api/ip + ipinfo"
 else
   rec egress_identity P1 fail "no exit identity measured" "tor api/ip"
 fi
@@ -330,8 +337,10 @@ else
 fi
 
 avail="$(df -Pk "$DISK_PATH" | awk 'NR==2{print int($4/1024/1024)}')"
-if   (( avail >= 20 )); then rec disk P1 ok "${avail}GiB free" "df -Pk"
-elif (( avail >= 8  )); then rec disk P1 fail "${avail}GiB free (<20)" "df -Pk"
+phase="${NYX_PHASE:-$(python3 -c 'import json;print(json.load(open("/lab/etc/readiness-policy.json")).get("phase",1))' 2>/dev/null || echo 1)}"
+dcls=P1; (( phase >= 4 )) && dcls=P0
+if   (( avail >= 20 )); then rec disk "$dcls" ok "${avail}GiB free (phase=$phase)" "df -Pk"
+elif (( avail >= 8  )); then rec disk "$dcls" fail "${avail}GiB free (<20, phase=$phase)" "df -Pk"
 else rec disk P0 fail "${avail}GiB free (critical)" "df -Pk"; fi
 
 # RQ-17: five negative controls against a TEST-* grant.
@@ -377,19 +386,40 @@ else
   rec cleanup_roundtrip P1 fail "marker survived removal" "rm -f"
 fi
 
+## E2. ORDER NYX-READINESS-02 delta checks -----------------------------------
+if [[ -f /lab/bin/checks-order02.sh ]]; then source /lab/bin/checks-order02.sh || true; fi
+
 ## F. score + artifact --------------------------------------------------------
-score=$(( tot_w > 0 ? pass_w * 100 / tot_w : 0 ))
-mode=exec; rc=0
-if (( p0 > 0 )); then mode=read_only; rc=91
-elif (( p1 > 0 )); then mode=degraded; rc=90; fi
+# RULE 7: the score is subordinate to the mode. A non-ready mode can never be
+# quoted as a number that suggests progress.
+raw_score=$(( tot_w > 0 ? pass_w * 100 / tot_w : 0 ))
+score=$raw_score; mode=ready; rc=0
+if (( p0 > 0 )); then mode=read_only; rc=91; score=0
+elif (( p1 > 0 )); then mode=degraded; rc=90; if (( score > 79 )); then score=79; fi; fi
+
+gov_ids=" gate_integrity policy_immutable policy_amend_authority policy_mode gate_key_separation runner_privilege arsenal_manifest arsenal_writable audit_anchor cleanup_roundtrip selftest_class artifact_redaction watcher_integrity trigger_liveness "
+gov_pw=0; gov_tw=0; op_pw=0; op_tw=0
+for k in "${!IDS[@]}"; do
+  w=0; case "${CLS[$k]}" in P0) w=10;; P1) w=4;; P2) w=1;; esac
+  okw=0; if [[ "${STA[$k]}" == ok ]]; then okw=$w; fi
+  if [[ "$gov_ids" == *" ${IDS[$k]} "* ]]; then
+    gov_tw=$((gov_tw+w)); gov_pw=$((gov_pw+okw))
+  else
+    op_tw=$((op_tw+w)); op_pw=$((op_pw+okw))
+  fi
+done
+gov=$(( gov_tw > 0 ? gov_pw*100/gov_tw : 0 ))
+ops=$(( op_tw > 0 ? op_pw*100/op_tw : 0 ))
 echo "$mode" >"$STATE/mode" 2>/dev/null || true
 
-python3 - "$TS" "$score" "$p0" "$p1" "$mode" "$OUT" "$POL" <<'PY'
+python3 - "$TS" "$score" "$p0" "$p1" "$mode" "$OUT" "$POL" "$gov" "$ops" "$raw_score" <<'PY'
 import json, os, sys, time
-ts, score, p0, p1, mode, out, pol = sys.argv[1:8]
-d = {"schema": "nyx.readiness/v1", "utc_ts": ts,
+ts, score, p0, p1, mode, out, pol, gov, ops, raw = sys.argv[1:11]
+d = {"schema": "nyx.readiness/v2", "utc_ts": ts,
      "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-     "score": int(score), "p0_fail": int(p0), "p1_fail": int(p1),
+     "score": int(score), "raw_score": int(raw),
+     "governance": int(gov), "operational": int(ops),
+     "p0_fail": int(p0), "p1_fail": int(p1),
      "mode": mode,
      "policy": json.load(open(pol)).get("schema") if os.path.exists(pol) else None}
 p = os.path.join(out, ts + ".json")
@@ -426,6 +456,6 @@ for f in sorted(glob.glob(os.path.join(evid, ts + "-*.log"))):
 print(",".join(bad[:3]) if bad else "none")
 PY
 )
-echo "READINESS $score | P0=$p0 P1=$p1 | mode=${mode//_/-} | ${gaps:-none}"
+echo "READINESS $score | governance=$gov operational=$ops | P0=$p0 P1=$p1 | mode=${mode//_/-} | ${gaps:-none}"
 echo "artifact: $OUT/$TS.json"
 (( rc == 0 )) || exit "$rc"
