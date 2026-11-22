@@ -302,7 +302,7 @@ fi
 
 T="${MYTHIC_TOKEN:-}"
 if [[ -z "$T" && -r /lab/state/mythic.token ]]; then T=$(cat /lab/state/mythic.token); fi
-if [[ -z "$T" ]]; then T=$(sudo -n cat /lab/state/mythic.token 2>/dev/null); fi
+if [[ -z "$T" ]]; then T=$(sudo -n cat /lab/state/mythic.token 2>/dev/null || true); fi
 if [[ -n "$T" ]]; then
   cb="$(curl -ksS -m 15 -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
         -d '{"query":"query{callback{id display_id active}}"}' \

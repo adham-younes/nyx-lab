@@ -34,6 +34,7 @@ install -m 0755 -o root -g root \
   "$REPO/nyx/runtime-boot.sh" \
   "$REPO/nyx/gate" \
   "$REPO/nyx/doctrine.sh" \
+  "$REPO/nyx/mission_active.py" \
   "$REPO/router/nyx-router.py" \
   "$REPO/evals/refusal_probe.py" /lab/bin/
 ln -sfn /lab/bin/runtime-boot.sh /workspace/runtime-boot.sh
@@ -81,6 +82,8 @@ log "arsenal fingerprint"
 find /usr/local/bin /lab/bin -maxdepth 1 -type f -print0 \
   | sort -z | xargs -0 sha256sum > /lab/etc/tools.sha256
 chmod 0444 /lab/etc/tools.sha256
+cp -f /lab/etc/tools.sha256 /lab/state/tools.sha256
+chmod 0644 /lab/state/tools.sha256
 
 log "repo manifest"
 bash "$REPO/nyx/seal.sh" >/dev/null
