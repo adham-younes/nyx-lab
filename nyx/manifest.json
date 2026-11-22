@@ -1,6 +1,6 @@
 {
   "name": "NYX Operational System",
-  "version": "4.3",
+  "version": "4.4",
   "encoding": "utf-8",
   "integration_mode": "full_replacement",
   "authorization_model": "grant_token_signed_hmac_sha256",
@@ -93,7 +93,7 @@
     },
     {
       "path": "nyx/readiness-policy.json",
-      "sha256": "674e26fc3f5df5d6f0339f0da94faa979f97ad6c624505fa1784a1a2fc21f4d6"
+      "sha256": "230fd6b0d6981183fd8dd7a069fc2e9a4803462c3bd593e364a9a17a7455095f"
     },
     {
       "path": "nyx/egress.json",
@@ -113,7 +113,7 @@
     },
     {
       "path": "bootstrap/install.sh",
-      "sha256": "91ec3da3689c5da3133a04472d429506cd45d3a8016b5e97faefc43c4db68edf"
+      "sha256": "c22d6993805e36887661e3d3ec36568a9e3fa0251518787f1b6025863e19faa5"
     },
     {
       "path": "relay/og-relay.mjs",
@@ -141,7 +141,7 @@
     },
     {
       "path": "nyx/checks-order02.sh",
-      "sha256": "490211899ce721bb66c06a742a286182a4a3e0459f456069eb115d2be11457e6"
+      "sha256": "95ad552fe1aa56ed14f8500894f05926c7df8749eedf76b4ac4fbd8354b66ca4"
     },
     {
       "path": "nyx/doctrine.sh",
@@ -230,6 +230,10 @@
     {
       "path": "doctrine/cases/README.md",
       "sha256": "767528a4f4f305dc84ef635cbf3413a77bf32b1fc75ab56628f772d632dc9e6f"
+    },
+    {
+      "path": "nyx/policy-sign.sh",
+      "sha256": "755f5d0fb425660456677e5d2e7e1c9aceaa1e3749ab3e99999fd1129b164ce5"
     }
   ],
   "install": {

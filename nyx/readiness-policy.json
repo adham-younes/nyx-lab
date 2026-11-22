@@ -28,7 +28,7 @@
   "RQ-15": "no systemd/NTP in sandbox: offset measured against HTTP Date headers",
   "RQ-19": "no AD host in lab: inventory recorded, arsenal_valued=false"
  },
- "version": 2,
+ "version": 3,
  "phase": 1,
  "selftest": {
   "enabled": true,
@@ -47,9 +47,10 @@
   "evidence_required": true
  },
  "policy_authority": {
-  "operator_pubkey": "/lab/etc/operator.pub",
+  "operator_pubkey": "/lab/etc/readiness-policy.pub",
   "signature": "/lab/etc/readiness-policy.sig",
-  "note": "policy amendments must verify against the operator key; the agent key must not verify alone"
+  "min_version": 3,
+  "note": "amendments must verify against the operator key; the agent key must not verify alone; the private key must not live on this host"
  },
  "axes": {
   "governance": [

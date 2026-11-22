@@ -4,28 +4,38 @@
 # Every command is guarded: this file must never abort the runner.
 
 # --- RQ-22 policy amendment authority ---------------------------------------
-# The policy may only be amended by a key the agent does not hold. Until the
-# operator installs /lab/etc/operator.pub + .sig this is a measured FAIL.
+# The policy may only be amended by a key the agent does not hold. PASS needs:
+# operator signature valid, version strictly increasing, and the private key
+# gone from the host. The agent key must not verify alone.
 pol=/lab/etc/readiness-policy.json
-op_pub=/lab/etc/operator.pub
+op_pub=/lab/etc/readiness-policy.pub
 op_sig=/lab/etc/readiness-policy.sig
 ver=$(python3 -c 'import json;print(json.load(open("/lab/etc/readiness-policy.json")).get("version",0))' 2>/dev/null || echo 0)
 psha=$(sha256sum "$pol" 2>/dev/null | cut -d' ' -f1)
+last=$(tail -1 /lab/state/policy-versions.log 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i ~ /^version=/){sub("version=","",$i); print $i}}' || echo 0)
+last=${last:-0}
+key_present=$(find / -maxdepth 4 -name 'operator.key' -not -path '/proc/*' -not -path '/sys/*' 2>/dev/null | head -1 || true)
 if [[ -f $op_pub && -f $op_sig ]]; then
-  msg="$EVID/${TS}-amend.msg"
+  msg="$EVID/${TS}-amend.msg"; negs="$EVID/${TS}-amend.neg"
   printf 'version=%s sha256=%s\n' "$ver" "$psha" >"$msg"
-  if openssl dgst -sha256 -verify "$op_pub" -signature "$op_sig" "$msg" >/dev/null 2>&1; then
-    last=$(tail -1 /lab/state/policy-versions.log 2>/dev/null | awk '{print $2}' || echo 0)
-    if (( ver > ${last:-0} )); then
-      rec policy_amend_authority P0 ok "operator signature valid, version $ver > anchored ${last:-0}" "openssl dgst -verify"
+  if openssl pkeyutl -verify -pubin -inkey "$op_pub" -rawin -in "$msg" -sigfile "$op_sig" >/dev/null 2>&1; then
+    openssl dgst -sha256 -hmac "$(cat /lab/etc/gate.key 2>/dev/null || echo none)" -out "$negs" "$msg" >/dev/null 2>&1 || true
+    agent_ok=0
+    openssl pkeyutl -verify -pubin -inkey "$op_pub" -rawin -in "$msg" -sigfile "$negs" >/dev/null 2>&1 && agent_ok=1
+    if (( agent_ok == 1 )); then
+      rec policy_amend_authority P0 fail "agent-held key also verifies: authority not separated" "openssl pkeyutl -verify"
+    elif [[ -n "$key_present" ]]; then
+      rec policy_amend_authority P0 fail "operator signature valid (v$ver) but private key still on host: $key_present — custody not taken" "find / -name operator.key"
+    elif (( ver <= last )); then
+      rec policy_amend_authority P0 fail "version $ver not greater than anchored $last" "policy-versions.log"
     else
-      rec policy_amend_authority P0 fail "operator signature valid but version $ver <= anchored ${last:-0}" "openssl dgst -verify"
+      rec policy_amend_authority P0 ok "operator sig valid, v$ver > anchored $last, agent key rejected, private key absent" "openssl pkeyutl -verify"
     fi
   else
-    rec policy_amend_authority P0 fail "signature does not verify against operator key (version=$ver)" "openssl dgst -verify"
+    rec policy_amend_authority P0 fail "signature does not verify against the operator key (v$ver)" "openssl pkeyutl -verify"
   fi
 else
-  rec policy_amend_authority P0 fail "no operator key: policy is signed only by the agent-held key (version=$ver sha=${psha:0:12})" "test -f /lab/etc/operator.pub"
+  rec policy_amend_authority P0 fail "no operator key on host: policy signed only by the agent-held key (v$ver sha=${psha:0:12})" "test -f $op_pub"
 fi
 
 # --- RQ-23 policy_mode ------------------------------------------------------
