@@ -37,7 +37,7 @@ jobs:
       - name: no secrets
         run: |
           if grep -rInE "ohe_lic_|gh[psu]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|BEGIN (RSA|OPENSSH|EC) PRIVATE|session_api_key" \
-               --exclude-dir=.git . ; then
+               --exclude-dir=.git --exclude=ci.yml . ; then
             echo "secret-like material found"; exit 1
           fi
 

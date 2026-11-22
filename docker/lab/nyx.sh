@@ -51,4 +51,5 @@ fi
 echo "arsenal: $(grep -l kali-chroot-wrapper /usr/local/bin/* 2>/dev/null | wc -l) wrappers · $(docker ps -q 2>/dev/null | wc -l) containers"
 disk
 
-/lab/bin/session-ready.sh || true
+/lab/bin/negctl-refresh.sh >/dev/null 2>&1 || true
+sudo -n -u openhands /lab/bin/session-ready.sh || true

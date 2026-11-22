@@ -132,12 +132,12 @@ fi
 
 w=""
 for d in /usr/local/bin /lab/bin; do
-  [[ -w "$d" ]] && w+="$d "
+  if sudo -n -u "$CHK_UID" test -w "$d" 2>/dev/null; then w+="$d "; fi
 done
 if [[ -z "$w" ]]; then
-  rec arsenal_writable P0 ok "agent cannot write /usr/local/bin or /lab/bin" "test -w"
+  rec arsenal_writable P0 ok "uid $CHK_UID cannot write /usr/local/bin or /lab/bin" "test -w"
 else
-  rec arsenal_writable P0 fail "agent can write: $w" "test -w"
+  rec arsenal_writable P0 fail "uid $CHK_UID can write: $w" "test -w"
 fi
 
 for f in /lab/share/feeds/known_exploited_vulnerabilities.json /lab/share/nuclei-templates; do

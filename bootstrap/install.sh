@@ -17,6 +17,9 @@ log "layout"
 install -d -m 0755 /lab /lab/bin /lab/etc /lab/state /lab/state/grants \
   /lab/state/anchors /lab/state/readiness /lab/state/test /lab/outbox \
   /lab/var /lab/share /lab/share/wordlists /lab/share/feeds
+chown root:root /lab /lab/bin /lab/etc
+chmod 0755 /lab /lab/bin /lab/etc
+chmod g-s /lab /lab/bin /lab/etc
 
 log "service user"
 id -u nyx >/dev/null 2>&1 || useradd -r -s /usr/sbin/nologin -d /nonexistent nyx
@@ -79,5 +82,6 @@ chmod 0444 /lab/etc/tools.sha256
 log "repo manifest"
 bash "$REPO/nyx/seal.sh" >/dev/null
 
-log "readiness"
-/lab/bin/session-ready.sh || true
+log "readiness (as $AGENT_USER)"
+sudo -n -u "$AGENT_USER" env NYX_TEST_GRANT=/lab/state/test/valid.json \
+  /lab/bin/session-ready.sh || true

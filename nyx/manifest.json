@@ -89,7 +89,7 @@
     },
     {
       "path": "nyx/session-ready.sh",
-      "sha256": "df5b90f3ad795d7ad0cfa865a0bea58ec3daeeb8679cd12e5faaf6211f4aaa0f"
+      "sha256": "37ce86b43d53df00d9c8a6c360a11f611d5fad9ed7e1830571ba81e1990a54ec"
     },
     {
       "path": "nyx/readiness-policy.json",
@@ -113,7 +113,7 @@
     },
     {
       "path": "bootstrap/install.sh",
-      "sha256": "60ed884e9cce788dec28e2633aeb0f1e9aab3cbc54724107423e871703578c36"
+      "sha256": "8319db8dfc9f90bf4e4da0f9a30ebce134e6fde31e2cdd305371daa090972f1b"
     },
     {
       "path": "relay/og-relay.mjs",
@@ -129,7 +129,11 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "ffded0fd73e95c50f607a06f5a25906328bccca76c7e9a6aa8bb7f1eac22f7dc"
+      "sha256": "0f40a824fbf72aaa578210e0aad006270bed9dc4e78732803dd35f9125266e8e"
+    },
+    {
+      "path": "nyx/refusal_suite.json",
+      "sha256": "a4a1a57f0d346a27b7c00c625d42db07316c72944e3aae86801d9a0159cd2d25"
     }
   ],
   "install": {
