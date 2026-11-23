@@ -38,6 +38,19 @@ for d in profiles provider-connections; do
     mount --bind "/workspace/.openhands/$d" "/home/openhands/.openhands/$d" 2>/dev/null
 done
 
+# 0c. repo sync: fast-forward only, never touch local commits
+if [[ -d $REPO/.git ]]; then
+  if timeout 30 git -C "$REPO" fetch -q origin 2>/dev/null; then
+    if timeout 30 git -C "$REPO" merge --ff-only -q origin/main >/dev/null 2>&1; then
+      row ok repo "fast-forwarded to $(git -C "$REPO" rev-parse --short HEAD)"
+    else
+      row skip repo "local commits kept at $(git -C "$REPO" rev-parse --short HEAD)"
+    fi
+  else
+    row skip repo "no network / offline"
+  fi
+fi
+
 # 1. /lab must live on the persistent volume: the container root is ephemeral
 if [[ -d $LAB && ! -L $LAB ]]; then
   install -d -m 0755 /workspace/lab
