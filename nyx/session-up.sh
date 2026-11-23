@@ -30,12 +30,17 @@ echo "[nyx] session-up  $(date -u +%FT%TZ)  repo=$REPO"
 [[ -e /workspace/nyx-lab ]] || ln -sfn "$REPO" /workspace/nyx-lab
 
 # 0b. agent config dirs must survive a container rebuild (keys live here)
+# a symlink survives container restarts (a bind mount does not)
 for d in profiles provider-connections; do
   install -d -m 0755 "/workspace/.openhands/$d"
   chown openhands:openhands "/workspace/.openhands/$d" 2>/dev/null
-  install -d -m 0700 "/home/openhands/.openhands/$d" 2>/dev/null
-  mountpoint -q "/home/openhands/.openhands/$d" 2>/dev/null || \
-    mount --bind "/workspace/.openhands/$d" "/home/openhands/.openhands/$d" 2>/dev/null
+  tgt="/home/openhands/.openhands/$d"
+  if mountpoint -q "$tgt" 2>/dev/null; then umount "$tgt" 2>/dev/null; fi
+  if [[ -e $tgt && ! -L $tgt ]]; then
+    cp -an "$tgt/." "/workspace/.openhands/$d/" 2>/dev/null
+    rm -rf "$tgt"
+  fi
+  [[ -L $tgt ]] || ln -sfn "/workspace/.openhands/$d" "$tgt"
 done
 
 # 0c. repo sync: fast-forward only, never touch local commits
@@ -86,6 +91,19 @@ if python3 "$LAB/bin/mission_gate.py" integrity 2>/dev/null | grep -q integrity_
   row ok gate "hmac seal ok"
 else
   row fail gate "run: mission_gate.py seal"
+fi
+
+# 4b. keep the chosen LLM profile active (the app validates it with a real completion)
+SK=/lab/etc/session.key
+PROF=${NYX_LLM_PROFILE:-orcacyber-flash-1.0}
+if [[ -s $SK ]] && port_open 60000; then
+  code=$(curl -sS -m 15 -o /tmp/nyx-activate.json -w '%{http_code}' -X POST \
+          -H "X-Session-API-Key: $(cat "$SK")" \
+          "http://127.0.0.1:60000/api/profiles/$PROF/activate" 2>/dev/null)
+  if [[ "$code" == 2* ]]; then row ok llm "$PROF active"
+  else row skip llm "activate http=$code (key stale?)"; fi
+else
+  row skip llm "app not up / no session key"
 fi
 
 # 5. wrappers: regenerate only when the generator changed
