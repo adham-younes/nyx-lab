@@ -35,6 +35,7 @@ install -m 0755 -o root -g root \
   "$REPO/nyx/gate" \
   "$REPO/nyx/doctrine.sh" \
   "$REPO/nyx/mission_active.py" \
+  "$REPO/nyx/mission.sh" \
   "$REPO/router/nyx-router.py" \
   "$REPO/evals/refusal_probe.py" /lab/bin/
 ln -sfn /lab/bin/runtime-boot.sh /workspace/runtime-boot.sh
@@ -103,6 +104,21 @@ chmod -R a+rX /lab/doctrine
 # the agent journals failures and cases; doctrine itself stays operator-owned
 install -d -m 0775 -o "$AGENT_USER" -g "$AGENT_USER" /lab/doctrine/failures /lab/doctrine/cases
 install -d -m 0775 -o "$AGENT_USER" -g "$AGENT_USER" /lab/state/doctrine
+
+log "autostart hook"
+# a fresh sandbox gets a fresh shell; this hook brings the lab up once per boot
+if [[ -f "$REPO/nyx/profile-hook.sh" ]]; then
+  install -m 0644 -o root -g root "$REPO/nyx/profile-hook.sh" \
+    /etc/profile.d/99-nyx-session.sh
+fi
+if [[ -f "$REPO/nyx/session-up.sh" ]]; then
+  install -d -m 0755 /workspace/nyx-lab
+  # /workspace/nyx-lab is normally the checkout itself; only add a symlink when
+  # the repo lives elsewhere, so we never shadow the working tree.
+  if [[ ! -e /workspace/nyx-lab/nyx ]]; then
+    ln -sfn "$REPO" /workspace/nyx-lab
+  fi
+fi
 
 log "readiness (as $AGENT_USER)"
 sudo -n -u "$AGENT_USER" env NYX_TEST_GRANT=/lab/state/test/valid.json \

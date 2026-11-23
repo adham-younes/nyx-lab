@@ -1,19 +1,697 @@
 {
-  "schema": "nyx.tool-policy/v3",
-  "defaults": { "allow": false, "timeout_s": 900, "step_up": false, "pin": "warn" },
+  "defaults": {
+    "allow": false,
+    "pin": "warn",
+    "step_up": false,
+    "timeout_s": 900
+  },
+  "note": "v4: every wrapper the arsenal exposes is allowed explicitly; dangerous tools are allow+step_up (a step-up token, not a denial). An unknown tool is denied by defaults on purpose: a new binary must be added here deliberately.",
+  "schema": "nyx.tool-policy/v4",
   "tools": {
-    "nmap":        { "allow": true, "bin": "nmap",        "pin": "warn" },
-    "masscan":     { "allow": true, "bin": "masscan",     "pin": "warn" },
-    "nuclei":      { "allow": true, "bin": "nuclei",      "pin": "pin" },
-    "ffuf":        { "allow": true, "bin": "ffuf",        "pin": "warn" },
-    "amass":       { "allow": true, "bin": "amass",       "pin": "warn" },
-    "sqlmap":      { "allow": true, "bin": "sqlmap",      "pin": "warn" },
-    "msfconsole":  { "allow": true, "bin": "msfconsole",  "pin": "warn" },
-    "impacket":    { "allow": true, "bin": "impacket-secretsdump", "pin": "warn" },
-    "hashcat":     { "allow": true, "bin": "hashcat",     "pin": "warn" },
-    "john":        { "allow": true, "bin": "john",        "pin": "warn" },
-    "responder":   { "allow": true, "bin": "responder",   "pin": "warn" },
-    "curl":        { "allow": true, "bin": "curl",        "pin": "warn" },
-    "bash":        { "allow": true, "bin": "bash",        "pin": "warn" }
+    "age": {
+      "allow": true,
+      "bin": "age",
+      "pin": "warn"
+    },
+    "aircrack-ng": {
+      "allow": true,
+      "bin": "aircrack-ng",
+      "pin": "warn"
+    },
+    "airmon-ng": {
+      "allow": true,
+      "bin": "airmon-ng",
+      "pin": "warn"
+    },
+    "amass": {
+      "allow": true,
+      "bin": "amass",
+      "pin": "warn"
+    },
+    "arpspoof": {
+      "allow": true,
+      "bin": "arpspoof",
+      "pin": "warn",
+      "step_up": true
+    },
+    "bettercap": {
+      "allow": true,
+      "bin": "bettercap",
+      "pin": "warn",
+      "step_up": true
+    },
+    "binwalk": {
+      "allow": true,
+      "bin": "binwalk",
+      "pin": "warn"
+    },
+    "bloodhound-python": {
+      "allow": true,
+      "bin": "bloodhound-python",
+      "pin": "warn",
+      "step_up": true
+    },
+    "bloodyad": {
+      "allow": true,
+      "bin": "bloodyad",
+      "pin": "warn",
+      "step_up": true
+    },
+    "censys": {
+      "allow": true,
+      "bin": "censys",
+      "pin": "warn"
+    },
+    "certipy": {
+      "allow": true,
+      "bin": "certipy",
+      "pin": "warn",
+      "step_up": true
+    },
+    "certipy-ad": {
+      "allow": true,
+      "bin": "certipy-ad",
+      "pin": "warn",
+      "step_up": true
+    },
+    "cewl": {
+      "allow": true,
+      "bin": "cewl",
+      "pin": "warn"
+    },
+    "chisel": {
+      "allow": true,
+      "bin": "chisel",
+      "pin": "warn",
+      "step_up": true
+    },
+    "claude-agent-acp": {
+      "allow": true,
+      "bin": "claude-agent-acp",
+      "pin": "warn"
+    },
+    "codex-acp": {
+      "allow": true,
+      "bin": "codex-acp",
+      "pin": "warn"
+    },
+    "coercer": {
+      "allow": true,
+      "bin": "coercer",
+      "pin": "warn",
+      "step_up": true
+    },
+    "commix": {
+      "allow": true,
+      "bin": "commix",
+      "pin": "warn"
+    },
+    "corepack": {
+      "allow": true,
+      "bin": "corepack",
+      "pin": "warn"
+    },
+    "crackmapexec": {
+      "allow": true,
+      "bin": "crackmapexec",
+      "pin": "warn",
+      "step_up": true
+    },
+    "crunch": {
+      "allow": true,
+      "bin": "crunch",
+      "pin": "warn",
+      "step_up": true
+    },
+    "dig": {
+      "allow": true,
+      "bin": "dig",
+      "pin": "warn"
+    },
+    "dirb": {
+      "allow": true,
+      "bin": "dirb",
+      "pin": "warn"
+    },
+    "dnsenum": {
+      "allow": true,
+      "bin": "dnsenum",
+      "pin": "warn"
+    },
+    "dnsrecon": {
+      "allow": true,
+      "bin": "dnsrecon",
+      "pin": "warn"
+    },
+    "donut": {
+      "allow": true,
+      "bin": "donut",
+      "pin": "warn",
+      "step_up": true
+    },
+    "enum4linux": {
+      "allow": true,
+      "bin": "enum4linux",
+      "pin": "warn"
+    },
+    "enum4linux-ng": {
+      "allow": true,
+      "bin": "enum4linux-ng",
+      "pin": "warn"
+    },
+    "ettercap": {
+      "allow": true,
+      "bin": "ettercap",
+      "pin": "warn",
+      "step_up": true
+    },
+    "evil-winrm": {
+      "allow": true,
+      "bin": "evil-winrm",
+      "pin": "warn",
+      "step_up": true
+    },
+    "feroxbuster": {
+      "allow": true,
+      "bin": "feroxbuster",
+      "pin": "warn"
+    },
+    "ffuf": {
+      "allow": true,
+      "bin": "ffuf",
+      "pin": "warn"
+    },
+    "foremost": {
+      "allow": true,
+      "bin": "foremost",
+      "pin": "warn"
+    },
+    "gdb": {
+      "allow": true,
+      "bin": "gdb",
+      "pin": "warn"
+    },
+    "gemini": {
+      "allow": true,
+      "bin": "gemini",
+      "pin": "warn"
+    },
+    "gobuster": {
+      "allow": true,
+      "bin": "gobuster",
+      "pin": "warn"
+    },
+    "hashcat": {
+      "allow": true,
+      "bin": "hashcat",
+      "pin": "warn",
+      "step_up": true
+    },
+    "havoc": {
+      "allow": true,
+      "bin": "havoc",
+      "pin": "warn"
+    },
+    "havoc-server": {
+      "allow": true,
+      "bin": "havoc-server",
+      "pin": "warn",
+      "step_up": true
+    },
+    "httpx": {
+      "allow": true,
+      "bin": "httpx",
+      "pin": "warn"
+    },
+    "httpx-toolkit": {
+      "allow": true,
+      "bin": "httpx-toolkit",
+      "pin": "warn"
+    },
+    "hydra": {
+      "allow": true,
+      "bin": "hydra",
+      "pin": "warn",
+      "step_up": true
+    },
+    "idle": {
+      "allow": true,
+      "bin": "idle",
+      "pin": "warn"
+    },
+    "idle3": {
+      "allow": true,
+      "bin": "idle3",
+      "pin": "warn"
+    },
+    "idle3.13": {
+      "allow": true,
+      "bin": "idle3.13",
+      "pin": "warn"
+    },
+    "impacket-getST": {
+      "allow": true,
+      "bin": "impacket-getST",
+      "pin": "warn"
+    },
+    "impacket-ntlmrelayx": {
+      "allow": true,
+      "bin": "impacket-ntlmrelayx",
+      "pin": "warn",
+      "step_up": true
+    },
+    "impacket-psexec": {
+      "allow": true,
+      "bin": "impacket-psexec",
+      "pin": "warn"
+    },
+    "impacket-secretsdump": {
+      "allow": true,
+      "bin": "impacket-secretsdump",
+      "pin": "warn",
+      "step_up": true
+    },
+    "impacket-ticketer": {
+      "allow": true,
+      "bin": "impacket-ticketer",
+      "pin": "warn"
+    },
+    "impacket-wmiexec": {
+      "allow": true,
+      "bin": "impacket-wmiexec",
+      "pin": "warn"
+    },
+    "john": {
+      "allow": true,
+      "bin": "john",
+      "pin": "warn",
+      "step_up": true
+    },
+    "kali": {
+      "allow": true,
+      "bin": "kali",
+      "pin": "warn"
+    },
+    "kerbrute": {
+      "allow": true,
+      "bin": "kerbrute",
+      "pin": "warn"
+    },
+    "kev": {
+      "allow": true,
+      "bin": "kev",
+      "pin": "warn"
+    },
+    "krbrelayx": {
+      "allow": true,
+      "bin": "krbrelayx",
+      "pin": "warn"
+    },
+    "ligolo-agent": {
+      "allow": true,
+      "bin": "ligolo-agent",
+      "pin": "warn"
+    },
+    "ligolo-proxy": {
+      "allow": true,
+      "bin": "ligolo-proxy",
+      "pin": "warn",
+      "step_up": true
+    },
+    "maigret": {
+      "allow": true,
+      "bin": "maigret",
+      "pin": "warn"
+    },
+    "masscan": {
+      "allow": true,
+      "bin": "masscan",
+      "pin": "warn",
+      "step_up": true
+    },
+    "medusa": {
+      "allow": true,
+      "bin": "medusa",
+      "pin": "warn",
+      "step_up": true
+    },
+    "mitm6": {
+      "allow": true,
+      "bin": "mitm6",
+      "pin": "warn",
+      "step_up": true
+    },
+    "mitmproxy": {
+      "allow": true,
+      "bin": "mitmproxy",
+      "pin": "warn",
+      "step_up": true
+    },
+    "msfconsole": {
+      "allow": true,
+      "bin": "msfconsole",
+      "pin": "warn"
+    },
+    "msfdb": {
+      "allow": true,
+      "bin": "msfdb",
+      "pin": "warn"
+    },
+    "msfpc": {
+      "allow": true,
+      "bin": "msfpc",
+      "pin": "warn"
+    },
+    "msfvenom": {
+      "allow": true,
+      "bin": "msfvenom",
+      "pin": "warn",
+      "step_up": true
+    },
+    "naabu": {
+      "allow": true,
+      "bin": "naabu",
+      "pin": "warn"
+    },
+    "nc": {
+      "allow": true,
+      "bin": "nc",
+      "pin": "warn"
+    },
+    "ncat": {
+      "allow": true,
+      "bin": "ncat",
+      "pin": "warn"
+    },
+    "netexec": {
+      "allow": true,
+      "bin": "netexec",
+      "pin": "warn",
+      "step_up": true
+    },
+    "nikto": {
+      "allow": true,
+      "bin": "nikto",
+      "pin": "warn"
+    },
+    "nmap": {
+      "allow": true,
+      "bin": "nmap",
+      "pin": "warn"
+    },
+    "node": {
+      "allow": true,
+      "bin": "node",
+      "pin": "warn"
+    },
+    "nping": {
+      "allow": true,
+      "bin": "nping",
+      "pin": "warn"
+    },
+    "npm": {
+      "allow": true,
+      "bin": "npm",
+      "pin": "warn"
+    },
+    "npx": {
+      "allow": true,
+      "bin": "npx",
+      "pin": "warn"
+    },
+    "nuclei": {
+      "allow": true,
+      "bin": "nuclei",
+      "pin": "warn"
+    },
+    "nxc": {
+      "allow": true,
+      "bin": "nxc",
+      "pin": "warn"
+    },
+    "nyx": {
+      "allow": true,
+      "bin": "nyx",
+      "pin": "warn"
+    },
+    "obfs4proxy": {
+      "allow": true,
+      "bin": "obfs4proxy",
+      "pin": "warn"
+    },
+    "openhands-agent-server": {
+      "allow": true,
+      "bin": "openhands-agent-server",
+      "pin": "warn"
+    },
+    "patator": {
+      "allow": true,
+      "bin": "patator",
+      "pin": "warn",
+      "step_up": true
+    },
+    "pip": {
+      "allow": true,
+      "bin": "pip",
+      "pin": "warn"
+    },
+    "pip3": {
+      "allow": true,
+      "bin": "pip3",
+      "pin": "warn"
+    },
+    "pip3.13": {
+      "allow": true,
+      "bin": "pip3.13",
+      "pin": "warn"
+    },
+    "pydoc": {
+      "allow": true,
+      "bin": "pydoc",
+      "pin": "warn"
+    },
+    "pydoc3": {
+      "allow": true,
+      "bin": "pydoc3",
+      "pin": "warn"
+    },
+    "pydoc3.13": {
+      "allow": true,
+      "bin": "pydoc3.13",
+      "pin": "warn"
+    },
+    "python": {
+      "allow": true,
+      "bin": "python",
+      "pin": "warn"
+    },
+    "python-config": {
+      "allow": true,
+      "bin": "python-config",
+      "pin": "warn"
+    },
+    "python3": {
+      "allow": true,
+      "bin": "python3",
+      "pin": "warn"
+    },
+    "python3-config": {
+      "allow": true,
+      "bin": "python3-config",
+      "pin": "warn"
+    },
+    "python3.13": {
+      "allow": true,
+      "bin": "python3.13",
+      "pin": "warn"
+    },
+    "python3.13-config": {
+      "allow": true,
+      "bin": "python3.13-config",
+      "pin": "warn"
+    },
+    "r2": {
+      "allow": true,
+      "bin": "r2",
+      "pin": "warn"
+    },
+    "radare2": {
+      "allow": true,
+      "bin": "radare2",
+      "pin": "warn"
+    },
+    "responder": {
+      "allow": true,
+      "bin": "responder",
+      "pin": "warn",
+      "step_up": true
+    },
+    "rustscan": {
+      "allow": true,
+      "bin": "rustscan",
+      "pin": "warn"
+    },
+    "searchsploit": {
+      "allow": true,
+      "bin": "searchsploit",
+      "pin": "warn"
+    },
+    "setoolkit": {
+      "allow": true,
+      "bin": "setoolkit",
+      "pin": "warn"
+    },
+    "sherlock": {
+      "allow": true,
+      "bin": "sherlock",
+      "pin": "warn"
+    },
+    "shodan": {
+      "allow": true,
+      "bin": "shodan",
+      "pin": "warn"
+    },
+    "sliver-client": {
+      "allow": true,
+      "bin": "sliver-client",
+      "pin": "warn",
+      "step_up": true
+    },
+    "sliver-server": {
+      "allow": true,
+      "bin": "sliver-server",
+      "pin": "warn",
+      "step_up": true
+    },
+    "smbclient": {
+      "allow": true,
+      "bin": "smbclient",
+      "pin": "warn",
+      "step_up": true
+    },
+    "smbmap": {
+      "allow": true,
+      "bin": "smbmap",
+      "pin": "warn"
+    },
+    "socat": {
+      "allow": true,
+      "bin": "socat",
+      "pin": "warn",
+      "step_up": true
+    },
+    "spiderfoot": {
+      "allow": true,
+      "bin": "spiderfoot",
+      "pin": "warn"
+    },
+    "sqlmap": {
+      "allow": true,
+      "bin": "sqlmap",
+      "pin": "warn"
+    },
+    "ssh-audit": {
+      "allow": true,
+      "bin": "ssh-audit",
+      "pin": "warn"
+    },
+    "sshuttle": {
+      "allow": true,
+      "bin": "sshuttle",
+      "pin": "warn"
+    },
+    "sslscan": {
+      "allow": true,
+      "bin": "sslscan",
+      "pin": "warn"
+    },
+    "subfinder": {
+      "allow": true,
+      "bin": "subfinder",
+      "pin": "warn"
+    },
+    "tcpdump": {
+      "allow": true,
+      "bin": "tcpdump",
+      "pin": "warn",
+      "step_up": true
+    },
+    "testssl": {
+      "allow": true,
+      "bin": "testssl",
+      "pin": "warn"
+    },
+    "theHarvester": {
+      "allow": true,
+      "bin": "theHarvester",
+      "pin": "warn"
+    },
+    "theharvester": {
+      "allow": true,
+      "bin": "theharvester",
+      "pin": "warn"
+    },
+    "tor": {
+      "allow": true,
+      "bin": "tor",
+      "pin": "warn"
+    },
+    "tor-up": {
+      "allow": true,
+      "bin": "/opt/tor-up.sh",
+      "pin": "warn"
+    },
+    "tshark": {
+      "allow": true,
+      "bin": "tshark",
+      "pin": "warn",
+      "step_up": true
+    },
+    "villain": {
+      "allow": true,
+      "bin": "villain",
+      "pin": "warn",
+      "step_up": true
+    },
+    "vol": {
+      "allow": true,
+      "bin": "vol",
+      "pin": "warn"
+    },
+    "wafw00f": {
+      "allow": true,
+      "bin": "wafw00f",
+      "pin": "warn"
+    },
+    "wfuzz": {
+      "allow": true,
+      "bin": "wfuzz",
+      "pin": "warn"
+    },
+    "whatweb": {
+      "allow": true,
+      "bin": "whatweb",
+      "pin": "warn"
+    },
+    "whois": {
+      "allow": true,
+      "bin": "whois",
+      "pin": "warn"
+    },
+    "wireshark": {
+      "allow": true,
+      "bin": "wireshark",
+      "pin": "warn"
+    },
+    "wpscan": {
+      "allow": true,
+      "bin": "wpscan",
+      "pin": "warn"
+    },
+    "yara": {
+      "allow": true,
+      "bin": "yara",
+      "pin": "warn"
+    }
   }
 }

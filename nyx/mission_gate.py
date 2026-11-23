@@ -110,6 +110,8 @@ def match(host, pat):
 def in_scope(host, scope):
     if any(match(host, e) for e in scope.get("exclude", [])):
         return False, "excluded"
+    if scope.get("include_all"):
+        return True, "include_all"
     if any(match(host, i) for i in scope.get("include", [])):
         return True, "included"
     return False, "not_listed"
@@ -212,7 +214,7 @@ def _loopback_only(scope):
     return bool(inc) and all(x.startswith("127.") or x.startswith("TEST-") for x in inc)
 
 
-def _operator_code(a, pol, scope):
+def _operator_code(a, pol, scope, include_all=False):
     oc = pol.get("operator_codes") or {}
     codes = set(oc.get("codes") or [])
     if not codes:
@@ -226,7 +228,7 @@ def _operator_code(a, pol, scope):
     # fixture code: loopback/TEST scope only, multi-use, never a real target
     fsha = Path("/lab/etc/fixture.sha256")
     if h not in codes and fsha.exists() and h == fsha.read_text().strip():
-        if not _loopback_only(scope):
+        if include_all or not _loopback_only(scope):
             out("deny_fixture_code_scope", False, scope=scope)
         return h
     if h not in codes:
@@ -244,14 +246,22 @@ def _operator_code(a, pol, scope):
 
 def cmd_issue(a):
     pol = jload(POLICY_F)
-    code_sha = _operator_code(a, pol, a.include)
+    include_all = bool(getattr(a, "include_all", False))
+    inc = list(a.include or [])
+    if not inc and not include_all:
+        out("deny_no_scope", False,
+            hint="pass --include <target...> or --include-all with an operator code")
+    code_sha = _operator_code(a, pol, inc, include_all)
     k = key()
     ttl = min(a.ttl, pol["defaults"]["max_ttl_minutes"])
+    scope = {"include": inc, "exclude": a.exclude or []}
+    if include_all:
+        scope["include_all"] = True
     grant = {
         "grant_id": "G-" + secrets.token_hex(6),
         "policy_id": pol["policy_id"],
         "objective": a.objective,
-        "scope": {"include": a.include, "exclude": a.exclude or []},
+        "scope": scope,
         "tools": a.tools or ["*"],
         "persistence": bool(a.persistence),
         "step_up": list(pol["step_up_actions"]),
@@ -306,6 +316,79 @@ def cmd_end(a):
     out("mission_ended", True)
 
 
+def cmd_extend(a):
+    """Edit the scope of the live grant without re-issuing a mission.
+
+    The signing key stays with the gate: we re-sign the same grant with a new
+    scope, bump the nonce, and record the previous scope_sha256 so the change
+    is auditable. An operator code is still required.
+    """
+    pol = jload(POLICY_F)
+    act = STATE / "mission" / "active.json"
+    if not act.exists():
+        out("deny_no_active_mission", False)
+    cur = json.loads(act.read_text())
+    gp = STATE / "grants" / (cur["grant_id"] + ".json")
+    if not gp.exists():
+        out("deny_grant_missing", False, grant_id=cur["grant_id"])
+    k = key()
+    rec = json.loads(gp.read_text())
+    g = rec["grant"]
+    if time.time() > g["exp"]:
+        out("deny_grant_expired", False, exp=g["exp"])
+
+    code = getattr(a, "operator_code", None)
+    if not code and getattr(a, "operator_code_stdin", False):
+        code = sys.stdin.readline().strip()
+    if not code:
+        out("deny_operator_code_required", False)
+    h = hashlib.sha256(code.strip().encode()).hexdigest()
+    codes = set((pol.get("operator_codes") or {}).get("codes") or [])
+    if h not in codes:
+        out("deny_operator_code", False, code_sha256=h[:12])
+
+    old_scope = g["scope"]
+    new_scope = {"include": list(old_scope.get("include") or []),
+                 "exclude": list(old_scope.get("exclude") or [])}
+    if old_scope.get("include_all"):
+        new_scope["include_all"] = True
+    before = json.dumps(new_scope, sort_keys=True)
+
+    for t in (a.add_target or []):
+        if t not in new_scope["include"]:
+            new_scope["include"].append(t)
+    for t in (a.rm_target or []):
+        if t in new_scope["include"]:
+            new_scope["include"].remove(t)
+    for t in (a.add_exclude or []):
+        if t not in new_scope["exclude"]:
+            new_scope["exclude"].append(t)
+    if getattr(a, "include_all", False):
+        new_scope["include_all"] = True
+    if getattr(a, "no_include_all", False):
+        new_scope.pop("include_all", None)
+    if json.dumps(new_scope, sort_keys=True) == before:
+        out("deny_extend_noop", False, scope=new_scope)
+
+    old_sha = rec.get("scope_sha256")
+    g["scope"] = new_scope
+    g["nonce"] = secrets.token_hex(8)
+    g["extended"] = int(time.time())
+    rec = {"grant": g, "sig": sign(g, k),
+           "scope_sha256": hashlib.sha256(canon(new_scope)).hexdigest(),
+           "prev_scope_sha256": old_sha}
+    gp.write_text(json.dumps(rec, indent=2), encoding="utf-8")
+    os.chmod(gp, 0o600)
+    cur["scope"] = new_scope
+    act.write_text(json.dumps(cur, indent=1))
+    os.chmod(act, 0o600)
+    audit({"event": "grant_extend", "grant_id": g["grant_id"],
+           "prev_scope_sha256": old_sha, "scope_sha256": rec["scope_sha256"],
+           "scope": new_scope})
+    out("grant_extended", True, grant_id=g["grant_id"], scope=new_scope,
+        prev_scope_sha256=old_sha, scope_sha256=rec["scope_sha256"])
+
+
 def cmd_verify(a):
     pol = jload(POLICY_F)
     tools = jload(TOOLS_F)
@@ -319,6 +402,11 @@ def cmd_verify(a):
     if not ok:
         out("deny_out_of_scope", False, target=a.target, reason=why,
             scope=g["scope"])
+    if why == "include_all":
+        # every target accepted under the opt-in mode is recorded, so the
+        # breadth of the grant is auditable after the fact.
+        audit({"event": "scope_include_all", "grant_id": g["grant_id"],
+               "target": a.target, "tool": a.tool})
     allow = "*" in g.get("tools", []) or a.tool in g.get("tools", [])
     tp = tools["tools"].get(a.tool, {"allow": tools["defaults"]["allow"]})
     if not allow or not tp.get("allow", False):
@@ -397,8 +485,11 @@ def main():
     g.add_argument("--operator-code-stdin", action="store_true",
                    help="read the operator code from stdin (no argv, no history)")
     s.add_argument("--objective", required=True)
-    s.add_argument("--include", nargs="+", required=True)
+    s.add_argument("--include", nargs="*")
     s.add_argument("--exclude", nargs="*")
+    s.add_argument("--include-all", action="store_true",
+                   help="opt-in: any target passes in_scope. Requires a fresh operator "
+                        "code; every accepted target is logged as scope_include_all.")
     s.add_argument("--tools", nargs="*")
     s.add_argument("--ttl", type=int, default=120)
     s.add_argument("--persistence", action="store_true")
@@ -418,6 +509,17 @@ def main():
     s.add_argument("--action", required=True)
     s.add_argument("--nonce", required=True)
     s.set_defaults(fn=cmd_stepup)
+
+    s = sub.add_parser("extend")
+    g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--operator-code")
+    g.add_argument("--operator-code-stdin", action="store_true")
+    s.add_argument("--add-target", action="append", default=[])
+    s.add_argument("--rm-target", action="append", default=[])
+    s.add_argument("--add-exclude", action="append", default=[])
+    s.add_argument("--include-all", action="store_true")
+    s.add_argument("--no-include-all", action="store_true")
+    s.set_defaults(fn=cmd_extend)
 
     s = sub.add_parser("amend")
     s.add_argument("--policy", required=True)

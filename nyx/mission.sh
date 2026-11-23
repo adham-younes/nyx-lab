@@ -46,8 +46,33 @@ PY
     ;;
   end)
     "$PY" "$GATE" end ;;
+  extend|amend)
+    # mission extend --add-target <t> [--rm-target <t>] [--include-all] --code <code>
+    add=(); rm=(); exc=(); code=""; all=0; noall=0
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --add-target|-a) add+=(--add-target "$2"); shift 2 ;;
+        --rm-target|-r)  rm+=(--rm-target "$2"); shift 2 ;;
+        --exclude|-x)    exc+=(--add-exclude "$2"); shift 2 ;;
+        --code|-c)       code="$2"; shift 2 ;;
+        --include-all)   all=1; shift ;;
+        --no-include-all) noall=1; shift ;;
+        *) echo "{\"code\":\"deny_unknown_flag\",\"arg\":\"$1\"}"; exit 2 ;;
+      esac
+    done
+    flags=()
+    (( all )) && flags+=(--include-all)
+    (( noall )) && flags+=(--no-include-all)
+    if [[ -n "$code" ]]; then
+      printf '%s' "$code" | "$PY" "$GATE" extend --operator-code-stdin \
+        "${add[@]}" "${rm[@]}" "${exc[@]}" "${flags[@]}"
+    else
+      "$PY" "$GATE" extend --operator-code-stdin \
+        "${add[@]}" "${rm[@]}" "${exc[@]}" "${flags[@]}"
+    fi
+    ;;
   check|up|boot)
     bash /lab/bin/session-init.sh ;;
   *)
-    echo "usage: mission {start --targets \"a,b\" --code <code> --hours 24 | status | end | check}"; exit 2 ;;
+    echo 'usage: mission {start --targets "a,b" --code <code> --hours 24 | status | extend --add-target T | end | check}'; exit 2 ;;
 esac

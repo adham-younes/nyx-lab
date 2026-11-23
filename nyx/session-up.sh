@@ -56,13 +56,18 @@ if [[ -d $REPO/.git ]]; then
   fi
 fi
 
-# 1. /lab must live on the persistent volume: the container root is ephemeral
+# 1. /lab must live on the persistent volume: the container root is ephemeral.
+#    LAB_HOME is on the 72G overlay; /workspace is only a 25G ext4 mount and
+#    cannot hold the docker data root (overlay cannot represent device nodes),
+#    so docker stays on /workspace/docker-data and /lab goes to LAB_HOME.
+LAB_HOME=${NYX_LAB_HOME:-/nyx-data/lab}
 if [[ -d $LAB && ! -L $LAB ]]; then
-  install -d -m 0755 /workspace/lab
-  cp -a "$LAB/." /workspace/lab/ 2>/dev/null
+  install -d -m 0755 "$LAB_HOME"
+  cp -a "$LAB/." "$LAB_HOME"/ 2>/dev/null
   rm -rf "$LAB"
 fi
-[[ -L $LAB ]] || ln -sfn /workspace/lab $LAB
+[[ -L $LAB ]] || ln -sfn "$LAB_HOME" $LAB
+[[ -L /workspace/lab ]] || ln -sfn "$LAB_HOME" /workspace/lab
 install -d -m 0755 "$LAB"/{bin,etc,state/{grants,test,readiness,anchors},outbox/evidence,var,share/{feeds,wordlists}} 2>/dev/null
 
 # 2. gate layer: rebuilt from the repo when the container came up empty
@@ -78,13 +83,26 @@ fi
 [[ -f $LAB/state/mode ]] || echo exec > "$LAB/state/mode"
 chown -R openhands:openhands "$LAB/state" "$LAB/outbox" "$LAB/var" "$LAB/share" 2>/dev/null
 
-# 3. chroot mounts (cheap when present)
-miss=""
+# 3. chroot mounts (cheap when present). A fresh container starts with an
+#    empty mount namespace: without /proc bound, every pgrep/ps inside the
+#    chroot silently sees zero processes and tools like tor-up.sh report a
+#    healthy daemon as dead. Retry once and report the real mount error.
+miss=""; merr=""
 for m in proc sys dev dev/pts; do
-  mountpoint -q "$KALI/$m" || { mkdir -p "$KALI/$m"; mount --bind "/$m" "$KALI/$m" 2>/dev/null; }
+  for attempt in 1 2; do
+    mountpoint -q "$KALI/$m" && break
+    mkdir -p "$KALI/$m"
+    mount --bind "/$m" "$KALI/$m" 2>>/tmp/nyx-mounts.err || true
+    sleep 1
+  done
   mountpoint -q "$KALI/$m" || miss+="$m "
 done
-[[ -z $miss ]] && row ok mounts "proc/sys/dev bound" || row fail mounts "missing: $miss"
+if [[ -z $miss ]]; then
+  row ok mounts "proc/sys/dev bound"
+else
+  merr=$(tail -1 /tmp/nyx-mounts.err 2>/dev/null)
+  row fail mounts "missing: $miss ${merr:+($merr)}"
+fi
 
 # 4. gate seal
 if python3 "$LAB/bin/mission_gate.py" integrity 2>/dev/null | grep -q integrity_ok; then
@@ -163,7 +181,7 @@ fi
 if docker info >/dev/null 2>&1; then
   row skip docker "$(docker ps -q 2>/dev/null | wc -l) containers"
 else
-  ( setsid dockerd --data-root=/workspace/docker >/var/log/dockerd.log 2>&1 & )
+  ( setsid dockerd --data-root=${NYX_DOCKER_ROOT:-/workspace/docker-data} >/var/log/dockerd.log 2>&1 & )
   for _ in $(seq 1 20); do docker info >/dev/null 2>&1 && break; sleep 1; done
   docker info >/dev/null 2>&1 && row ok docker "daemon up" || row fail docker "see /var/log/dockerd.log"
 fi

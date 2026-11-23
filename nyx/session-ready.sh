@@ -12,7 +12,9 @@ OUT="$STATE/readiness"
 EVID="$OUT/raw"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 PHYS_IF="${PHYS_IF:-$(awk '$2=="00000000"{print $1; exit}' /proc/net/route)}"
-DISK_PATH=/workspace
+# the lab and docker data live on the persistent volume; /workspace may be a
+# small mount holding only symlinks, so measure a path that must exist.
+DISK_PATH=${NYX_DISK_PATH:-/lab/outbox/evidence}
 mkdir -p "$OUT" "$EVID"
 
 declare -a IDS=() CLS=() STA=() DET=() CMD=() SHA=()
@@ -101,6 +103,8 @@ head_hash=$(tail -1 /lab/state/audit.jsonl | python3 -c 'import json,sys;print(j
 anchor="/lab/state/anchors/$(date -u +%F).anchor"
 printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$head_hash" >>"$anchor" 2>/dev/null || true
 offhost=no
+NYX_ANCHOR_SINK=${NYX_ANCHOR_SINK:-/workspace/nyx-anchors}
+mkdir -p "$NYX_ANCHOR_SINK" 2>/dev/null || true
 if [[ -n "${NYX_ANCHOR_SINK:-}" ]]; then
   if [[ "$NYX_ANCHOR_SINK" == http* ]]; then
     curl -fsS -m 10 -X POST --data-binary "@$anchor" "$NYX_ANCHOR_SINK" >/dev/null 2>&1 && offhost=yes
@@ -304,7 +308,10 @@ T="${MYTHIC_TOKEN:-}"
 if [[ -z "$T" && -r /lab/state/mythic.token ]]; then T=$(cat /lab/state/mythic.token); fi
 if [[ -z "$T" ]]; then T=$(sudo -n cat /lab/state/mythic.token 2>/dev/null || true); fi
 if [[ -n "$T" ]]; then
-  cb="$(curl -ksS -m 15 -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+  # Mythic accepts API tokens only via the `apitoken` header (hasura auth hook
+  # reads `apitoken`/`Authorization: Bearer`, but the server's TokenValid path
+  # that populates hasura claims is reached only through `apitoken`).
+  cb="$(curl -ksS -m 15 -H "apitoken: $T" -H 'Content-Type: application/json' \
         -d '{"query":"query{callback{id display_id active}}"}' \
         https://127.0.0.1:7443/graphql/ 2>/dev/null | head -c 300)"
   if grep -q '"callback":\[{.*"id"' <<<"$cb"; then
