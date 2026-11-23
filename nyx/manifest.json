@@ -11,7 +11,7 @@
   "files": [
     {
       "path": "AGENTS.md",
-      "sha256": "91d0fd88360dfbe15e7ab46e19987b94ebc240b512295e46ed4860b9e71610a1"
+      "sha256": "8b5c9fc116ac9cb45d8aaa860c1fa5fbb9c4c8084dce460f912a90797eece7e4"
     },
     {
       "path": "nyx/NYX_SYSTEM_PROMPT_v3.0.md",
@@ -87,7 +87,7 @@
     },
     {
       "path": "nyx/session-ready.sh",
-      "sha256": "bdee8ad4a5d51f56cb29694ba7e75799cc9da639d049dc64cbd1ab8e504ec13e"
+      "sha256": "06056cfe83802cfa8da09e475e12417c1696829a12d7d4a34c88c9e32f316d8a"
     },
     {
       "path": "nyx/readiness-policy.json",
@@ -111,7 +111,7 @@
     },
     {
       "path": "bootstrap/install.sh",
-      "sha256": "6f5bc68ef281d98537948b9d68e42bc7191a3c0d683fb443879d7144212d8d7f"
+      "sha256": "fbef6bc64a7b1187d7dd510d65fd9c8f3979231fc77e6201849af7cabdbbdb56"
     },
     {
       "path": "relay/og-relay.mjs",

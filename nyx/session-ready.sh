@@ -105,7 +105,7 @@ if [[ -n "${NYX_ANCHOR_SINK:-}" ]]; then
   if [[ "$NYX_ANCHOR_SINK" == http* ]]; then
     curl -fsS -m 10 -X POST --data-binary "@$anchor" "$NYX_ANCHOR_SINK" >/dev/null 2>&1 && offhost=yes
   else
-    cp "$anchor" "$NYX_ANCHOR_SINK" 2>/dev/null && offhost=yes
+    cp "$anchor" "$NYX_ANCHOR_SINK" 2>/dev/null && offhost=yes || true
   fi
 fi
 if [[ $chain == ok && $offhost == yes ]]; then
